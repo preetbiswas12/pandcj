@@ -23,7 +23,16 @@ export default function AdminLoginPage() {
     const data = await res.json()
     setLoading(false)
     if (!res.ok) return setError(data?.error || 'Login failed')
-    router.push('/admin')
+    try {
+      // Prefer full reload to ensure server receives the auth cookie and
+      // renders the admin page with authenticated data. Client-side
+      // transitions can sometimes not include cookies for server RSC
+      // fetches depending on edge/CDN behaviors.
+      console.log('Login success — navigating to /admin')
+      window.location.href = '/admin'
+    } catch (e) {
+      router.push('/admin')
+    }
   }
 
   return (
