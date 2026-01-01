@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 
 const SETTINGS_PATH = path.join(process.cwd(), 'public', 'banner-settings.json')
 
@@ -24,8 +25,16 @@ function writeSettings(obj) {
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(obj, null, 2), 'utf-8')
     return true
   } catch (err) {
-    console.error('Failed to write banner settings', err)
-    return false
+    console.error('Failed to write banner settings to public dir', err)
+    try {
+      const tmpPath = path.join(os.tmpdir(), 'pandc-banner-settings.json')
+      fs.writeFileSync(tmpPath, JSON.stringify(obj, null, 2), 'utf-8')
+      console.warn('Wrote banner settings to tmp:', tmpPath)
+      return true
+    } catch (tmpErr) {
+      console.error('Failed to write banner settings to tmp', tmpErr)
+      return false
+    }
   }
 }
 

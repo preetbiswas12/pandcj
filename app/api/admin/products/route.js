@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 import { randomUUID } from 'crypto'
 
 export async function POST(req) {
@@ -35,7 +36,19 @@ export async function POST(req) {
     }
 
     products.push(newProduct)
-    fs.writeFileSync(productsFile, JSON.stringify(products, null, 2))
+    try {
+      fs.writeFileSync(productsFile, JSON.stringify(products, null, 2))
+    } catch (err) {
+      console.error('Failed to write products.json to public dir', err)
+      try {
+        const tmpPath = path.join(os.tmpdir(), 'pandc-products.json')
+        fs.writeFileSync(tmpPath, JSON.stringify(products, null, 2))
+        console.warn('Wrote products to tmp:', tmpPath)
+      } catch (tmpErr) {
+        console.error('Failed to write products to tmp', tmpErr)
+        return new Response(JSON.stringify({ error: 'Could not create product' }), { status: 500 })
+      }
+    }
 
     return new Response(JSON.stringify(newProduct), { status: 201 })
   } catch (err) {
