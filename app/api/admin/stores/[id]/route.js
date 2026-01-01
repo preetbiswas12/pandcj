@@ -63,7 +63,3 @@ export async function DELETE(req, context) {
     return new Response(JSON.stringify({ error: 'Failed to delete store' }), { status: 500 })
   }
 }
-    console.error(err)
-    return new Response(JSON.stringify({ error: 'Failed to delete store' }), { status: 500 })
-  }
-}

@@ -49,11 +49,6 @@ export async function DELETE(req) {
     return new Response(JSON.stringify({ error: 'Failed to delete newsletter entry' }), { status: 500 })
   }
 }
-  } catch (err) {
-    console.error(err)
-    return new Response(JSON.stringify({ error: 'Could not read newsletters' }), { status: 500 })
-  }
-}
 
 export async function POST(req) {
   try {
