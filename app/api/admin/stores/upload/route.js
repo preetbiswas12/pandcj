@@ -41,10 +41,11 @@ export async function POST(req) {
         const fileField = `data:${mimeType};base64,${base64Data}`
 
         // Build public_id without slashes (Cloudinary 'display name' may reject slashes).
+        // Extract filename without extension
         const baseName = path.parse(safeName).name
-        // Sanitize baseName: remove all special chars, only allow alphanumeric, dash, underscore
+        // Sanitize baseName: ONLY alphanumeric, dash, underscore (no dots, no slashes, no special chars)
         const sanitizedBaseName = baseName
-          .replace(/[^a-zA-Z0-9_-]/g, '_')  // Replace special chars with underscore
+          .replace(/[^a-zA-Z0-9_-]/g, '_')  // Replace ALL special chars (including dots) with underscore
           .replace(/_{2,}/g, '_')  // Collapse multiple underscores into one
           .replace(/^_+|_+$/g, '')  // Remove leading/trailing underscores
         
@@ -85,7 +86,12 @@ export async function POST(req) {
         if (!res.ok) {
           const text = await res.text()
           console.error('Cloudinary upload failed', res.status, text)
-          // fall through to local/tmp fallback
+          try {
+            const errorBody = JSON.parse(text)
+            return new Response(JSON.stringify({ error: errorBody }), { status: res.status })
+          } catch {
+            return new Response(JSON.stringify({ error: { message: text } }), { status: res.status })
+          }
         } else {
           const bodyJson = await res.json()
           // include the dataUrl for clients that want an immediate preview; primary preview should use `url`

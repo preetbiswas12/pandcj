@@ -44,6 +44,9 @@ export default function StoreAddProduct() {
                 const base64 = dataUrl.split(',')[1]
                 const res = await fetch('/api/admin/stores/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: base64, filename: file.name }) })
                 const body = await res.json()
+                if (!res.ok) {
+                    throw new Error(`Upload failed: ${body?.error?.message || 'Unknown error'}`)
+                }
                 if (body?.url) uploadedUrls.push(body.url)
             }
 
