@@ -7,7 +7,7 @@ export default function AdminNewslettersPage() {
 
   useEffect(() => {
     let mounted = true
-    fetch('/newsletters.json')
+    fetch('/api/admin/newsletters')
       .then(r => r.json())
       .then(data => { if (mounted) setList(data || []) })
       .catch(() => { if (mounted) setList([]) })

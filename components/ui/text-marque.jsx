@@ -11,7 +11,6 @@ import {
   useAnimationFrame,
   useMotionValue,
 } from 'motion/react';
-import { wrap } from '@motionone/utils';
 import { cn } from '@/lib/utils';
 
 const Component = forwardRef(function Component(
@@ -36,7 +35,8 @@ const Component = forwardRef(function Component(
     clamp: false,
   });
 
-  const x = useTransform(baseX, (v) => `${wrap(-20, -45, v)}%`);
+  // Remove wrapping to show full text without scrolling off right side
+  const x = useTransform(baseX, (v) => `${Math.max(-100, v)}%`);
 
   const directionFactor = useRef(1);
   const hasStarted = useRef(false);
@@ -66,20 +66,20 @@ const Component = forwardRef(function Component(
   return (
     <div
       ref={ref}
-      className="overflow-x-hidden overflow-y-visible whitespace-nowrap flex items-center"
+      className="w-full overflow-x-hidden overflow-y-hidden whitespace-normal flex items-center justify-center px-4"
     >
       <motion.div
         className="flex whitespace-nowrap gap-10 flex-nowrap items-center"
         style={{ x }}
       >
-        {Array.from({ length: 4 }).map((_, i) => (
+        {Array.from({ length: 1 }).map((_, i) => (
           <span
             key={i}
             className={cn(
-              'inline-block align-middle leading-[1.05] text-[min(8vw,80px)]',
+              'inline-block align-middle leading-[1.05] text-[min(8vw,80px)] bg-gradient-to-r from-yellow-400 via-yellow-300 to-red-500 bg-clip-text text-transparent',
               clasname
             )}
-            style={{whiteSpace: 'nowrap'}}
+            style={{whiteSpace: 'normal', width: '100%'}}
           >
             {children}
           </span>

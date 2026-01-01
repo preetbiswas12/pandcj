@@ -21,7 +21,7 @@ const OurSpec = () => {
 				<div className="container mx-auto px-6 relative z-10 h-full flex items-center">
 					<div className="w-full flex items-center justify-between gap-6">
 						<div className="max-w-lg text-white">
-							<h2 className="text-2xl md:text-4xl lg:text-5xl font-semibold leading-tight">Subscribe to our newsletter and receive exclusive offers every week</h2>
+							<h2 className="text-2xl md:text-4xl lg:text-5xl font-semibold leading-tight">Subscribe to get discount and affordable prices of jewellery right on release.</h2>
 						</div>
 					</div>
 				</div>

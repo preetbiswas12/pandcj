@@ -3,6 +3,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+    font-family: 'AMORIA';
+    src: url('/font/AMORIA.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 @layer components {
     @keyframes marqueeScroll {
         0% {

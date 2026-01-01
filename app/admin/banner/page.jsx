@@ -106,7 +106,7 @@ export default function AdminBanner() {
           <label className="block mt-2">Price
             <input value={settings.left?.price||''} onChange={e=>setSettings(s=>({...s,left:{...(s.left||{}),price:e.target.value}}))} className="w-full p-2 border rounded" />
           </label>
-          <label className="block mt-2">Learn More Link
+          <label className="block mt-2">Redirect Link
             <input value={settings.left?.learnMoreLink||''} onChange={e=>setSettings(s=>({...s,left:{...(s.left||{}),learnMoreLink:e.target.value}}))} className="w-full p-2 border rounded" />
           </label>
           <label className="block mt-2">Background Image

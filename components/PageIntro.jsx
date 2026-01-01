@@ -7,11 +7,24 @@ const PageIntro = ({ initial = null }) => {
 
   useEffect(() => {
     let mounted = true
-    // fetch fresh data in background to keep client in sync
-    fetch('/api/admin/pageintro?ts=' + Date.now()).then(r => r.json()).then(data => {
-      if (mounted && data) setSettings(data)
-    }).catch(() => {})
-    return () => { mounted = false }
+    let es
+
+    try {
+      es = new EventSource('/api/settings/stream?key=pageintro')
+      es.addEventListener('update', (ev) => {
+        try {
+          const msg = JSON.parse(ev.data)
+          if (mounted && msg && msg.data) {
+            setSettings(msg.data)
+          }
+        } catch (e) { }
+      })
+    } catch (e) { }
+
+    return () => {
+      mounted = false
+      if (es) es.close()
+    }
   }, [])
 
   const title = settings?.title || 'Sale of the summer collection'
@@ -34,15 +47,15 @@ const PageIntro = ({ initial = null }) => {
         <div className="container mx-auto px-6 py-6">
           <ul className="shop-data__items flex flex-col md:flex-row gap-4 md:gap-6">
             <li className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded bg-gray-100 grid place-items-center">🚚</div>
+              <div className="w-10 h-10 rounded bg-gray-100 grid place-items-center">✨</div>
               <div className="data-item__content">
-                <h4 className="font-medium">Free Shipping</h4>
-                <p className="text-sm text-muted-foreground">On purchases over $199</p>
+                <h4 className="font-medium">Symbol Of Elegance</h4>
+                <p className="text-sm text-muted-foreground">A true gem of Elegance</p>
               </div>
             </li>
 
             <li className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded bg-gray-100 grid place-items-center">⭐</div>
+              <div className="w-10 h-10 rounded bg-gray-100 grid place-items-center">👤</div>
               <div className="data-item__content">
                 <h4 className="font-medium">99% Satisfied Customers</h4>
                 <p className="text-sm text-muted-foreground">Our clients' opinions speak for themselves</p>
@@ -50,9 +63,9 @@ const PageIntro = ({ initial = null }) => {
             </li>
 
             <li className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded bg-gray-100 grid place-items-center">💳</div>
+              <div className="w-10 h-10 rounded bg-gray-100 grid place-items-center">🔄</div>
               <div className="data-item__content">
-                <h4 className="font-medium">Originality Guaranteed</h4>
+                <h4 className="font-medium">Replacement Guaranteed</h4>
                 <p className="text-sm text-muted-foreground">30 days warranty for each product from our store</p>
               </div>
             </li>

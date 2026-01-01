@@ -12,10 +12,24 @@ const Hero = ({ initial = null }) => {
 
     useEffect(() => {
         let mounted = true
-        fetch('/api/admin/banner?ts=' + Date.now()).then(r => r.json()).then(data => {
-            if (mounted && data) setSettings(data)
-        }).catch(() => {})
-        return () => { mounted = false }
+        let es
+
+        try {
+            es = new EventSource('/api/settings/stream?key=banner')
+            es.addEventListener('update', (ev) => {
+                try {
+                    const msg = JSON.parse(ev.data)
+                    if (mounted && msg && msg.data) {
+                        setSettings(msg.data)
+                    }
+                } catch (e) { }
+            })
+        } catch (e) { }
+
+        return () => {
+            mounted = false
+            if (es) es.close()
+        }
     }, [])
 
     const s = settings || {}
@@ -50,7 +64,7 @@ const Hero = ({ initial = null }) => {
                             <p className='text-3xl text-black'>{currency}{left.price || '4.90'}</p>
                         </div>
                         <a href={left.learnMoreLink || '/'} className='inline-block'>
-                            <button className='bg-slate-800 text-white text-sm py-2.5 px-7 sm:py-5 sm:px-12 mt-4 sm:mt-10 rounded-md hover:bg-slate-900 hover:scale-103 active:scale-95 transition'>LEARN MORE</button>
+                            <button className='bg-slate-800 text-white text-sm py-2.5 px-7 sm:py-5 sm:px-12 mt-4 sm:mt-10 rounded-md hover:bg-slate-900 hover:scale-103 active:scale-95 transition'>BUY NOW</button>
                         </a>
                     </div>
                     <Image className='sm:absolute bottom-0 right-0 md:right-10 w-full sm:max-w-sm' src={left.modelImage || assets.hero_model_img} alt="" />

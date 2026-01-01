@@ -10,7 +10,6 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: 'No items in order' }), { status: 400 })
     }
 
-    // Enrich items with product details
     const enrichedItems = await Promise.all(
       items.map(async (it) => {
         const product = await mongodb.product.findById(it.productId)
@@ -66,7 +65,6 @@ export async function GET(req) {
     const url = new URL(req.url)
     const userId = url.searchParams.get('userId')
     const orderId = url.searchParams.get('orderId')
-    const storeId = url.searchParams.get('storeId')
     const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 500)
 
     if (orderId) {
@@ -76,11 +74,6 @@ export async function GET(req) {
 
     if (userId) {
       const orders = await mongodb.order.findByUserId(userId, limit)
-      return new Response(JSON.stringify(orders), { status: 200 })
-    }
-
-    if (storeId) {
-      const orders = await mongodb.order.findByStoreId(storeId, limit)
       return new Response(JSON.stringify(orders), { status: 200 })
     }
 

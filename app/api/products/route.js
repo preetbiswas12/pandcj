@@ -1,24 +1,29 @@
-import prisma from '@/lib/prisma'
-import fs from 'fs'
-import path from 'path'
+import mongodb from '@/lib/mongodb'
 
-export async function GET() {
+export async function GET(req) {
   try {
-    try {
-      const products = await prisma.product.findMany({ orderBy: { createdAt: 'desc' }, include: { store: true } })
-      return new Response(JSON.stringify(products), { status: 200 })
-    } catch (dbErr) {
-      console.warn('Prisma unavailable for GET /api/products, falling back to files', dbErr.message || dbErr)
+    const { searchParams } = new URL(req.url)
+    const storeId = searchParams.get('storeId')
+    const category = searchParams.get('category')
+    const limit = Math.min(Number(searchParams.get('limit')) || 100, 500)
+    const skip = Number(searchParams.get('skip')) || 0
+
+    let products
+    if (storeId) {
+      products = await mongodb.product.findByStoreId(storeId, limit)
+    } else if (category) {
+      products = await mongodb.product.findByCategory(category, limit)
+    } else {
+      products = await mongodb.product.findMany({}, limit, skip)
     }
 
-    const publicDir = path.join(process.cwd(), 'public')
-    const productsFile = path.join(publicDir, 'products.json')
-    if (!fs.existsSync(productsFile)) return new Response(JSON.stringify([]), { status: 200 })
-    let products = []
-    try { products = JSON.parse(fs.readFileSync(productsFile, 'utf8') || '[]') } catch (e) { products = [] }
-    return new Response(JSON.stringify(products), { status: 200 })
+    return new Response(JSON.stringify(products), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    })
   } catch (err) {
-    console.error(err)
+    console.error('GET /api/products failed:', err)
     return new Response(JSON.stringify({ error: 'Failed to fetch products' }), { status: 500 })
   }
 }
+

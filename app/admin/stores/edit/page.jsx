@@ -45,25 +45,6 @@ export default function AdminStoreEdit() {
               })
               if (json.logo) setPreview(json.logo)
             }
-          } else {
-            // Fallback: try public/stores.json (file-based stores)
-            const f = await fetch('/stores.json').catch(() => null)
-            if (f && f.ok) {
-              const list = await f.json()
-              const found = list.find(s => s.id === storeId || s.username === storeId)
-              if (found) {
-                setForm({
-                  name: found.name || '',
-                  username: found.username || '',
-                  description: found.description || '',
-                  address: found.address || '',
-                  contact: found.contact || '',
-                  email: found.email || '',
-                  logo: found.logo || '',
-                })
-                if (found.logo) setPreview(found.logo)
-              }
-            }
           }
         } catch (e) {
           console.error('Failed to load store', e)

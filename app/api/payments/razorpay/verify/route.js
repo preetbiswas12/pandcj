@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { randomUUID } from 'crypto'
-import prisma from '@/lib/prisma'
+import mongodb from '@/lib/mongodb'
 import Razorpay from 'razorpay'
 
 const razorpayInstance = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
@@ -29,27 +29,25 @@ export async function POST(req) {
     }
 
     // signature valid — handle payment and create DB order from payload
-    // payload should include: items, total, address, userId, paymentMethod (optional)
-    const { items, total, address, userId, localOrderId } = payload || {}
+    const { items, total, address, userId, localOrderId, couponCode } = payload || {}
     if (!items || !Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({ error: 'No items to create order' }), { status: 400 })
     }
 
-    // If localOrderId is provided, check expiry and status
+    // If localOrderId is provided, check expiry
     if (localOrderId) {
       try {
-        const local = await prisma.order.findUnique({ where: { id: localOrderId } })
+        const local = await mongodb.order.findById(localOrderId)
         if (!local) return new Response(JSON.stringify({ error: 'Local order not found' }), { status: 404 })
         // if expired, refund payment immediately
         if (local.expiresAt && new Date(local.expiresAt).getTime() < Date.now()) {
           try {
             const refund = await razorpayInstance.payments.refund(razorpay_payment_id)
-            await prisma.order.update({ where: { id: localOrderId }, data: { status: 'EXPIRED', refundId: refund.id } })
+            await mongodb.order.updateStatus(localOrderId, 'expired')
             return new Response(JSON.stringify({ ok: false, refunded: true, refundId: refund.id }), { status: 200 })
           } catch (e) {
             console.error('refund failed', e)
-            // still mark expired
-            await prisma.order.update({ where: { id: localOrderId }, data: { status: 'EXPIRED' } })
+            await mongodb.order.updateStatus(localOrderId, 'expired')
             return new Response(JSON.stringify({ ok: false, refunded: false }), { status: 500 })
           }
         }
@@ -60,41 +58,53 @@ export async function POST(req) {
 
     // Ensure user
     const uid = userId || `guest-${randomUUID()}`
-    await prisma.user.upsert({ where: { id: uid }, create: { id: uid, name: (address && address.name) || `User ${uid}`, email: (address && address.email) || `${uid}@example.com`, image: '', cart: {} }, update: { name: (address && address.name) || undefined } })
+    await mongodb.user.upsert(uid, { name: (address && address.name) || `User ${uid}`, email: (address && address.email) || `${uid}@example.com` })
 
-    // create address
-    const addrData = address || {}
-    const createdAddress = await prisma.address.create({ data: { userId: uid, name: addrData.name || '', email: addrData.email || '', street: addrData.street || '', city: addrData.city || '', state: addrData.state || '', zip: addrData.zip || '', country: addrData.country || '', phone: addrData.phone || '' } })
+    // Enrich items with product details
+    const enrichedItems = await Promise.all(
+      items.map(async (it) => {
+        const product = await mongodb.product.findById(it.productId)
+        return {
+          productId: it.productId,
+          product: product || { id: it.productId, name: it.name || 'Unknown', images: it.images || [] },
+          quantity: Number(it.quantity) || 1,
+          price: Number(it.price) || (product ? product.price : 0),
+          storeId: product ? product.storeId : (it.storeId || 'default-store')
+        }
+      })
+    )
 
-    // Enrich items: ensure stores and products exist
-    const storeIds = Array.from(new Set(items.map(i => i.storeId || 'default-store')))
-    for (const sid of storeIds) {
-      try {
-        await prisma.store.upsert({ where: { id: sid }, create: { id: sid, userId: uid, name: `Store ${sid}`, username: `store-${sid}`, description: '', address: '', status: 'approved', isActive: true, logo: '', email: '', contact: '' }, update: {} })
-      } catch (e) {
-        console.warn('Could not upsert store', sid, e.message || e)
+    // Apply coupon if provided
+    let discountAmount = 0
+    if (couponCode) {
+      const coupon = await mongodb.coupon.findByCode(couponCode)
+      if (coupon && new Date(coupon.expiresAt) > new Date()) {
+        discountAmount = (total * coupon.discount) / 100
+        await mongodb.coupon.incrementUsage(couponCode)
       }
     }
 
-    for (const it of items) {
-      const pid = it.productId || (it.product && it.product.id) || `prod-${randomUUID()}`
-      const prodName = (it.product && it.product.name) || it.name || 'Imported product'
-      const prodImages = Array.isArray(it.product && it.product.images) ? it.product.images : ((it.product && it.product.images) ? [it.product.images] : [])
-      try {
-        await prisma.product.upsert({ where: { id: pid }, create: { id: pid, name: prodName, description: (it.product && it.product.description) || '', mrp: Number((it.product && it.product.mrp) || it.price || 0), price: Number((it.product && it.product.price) || it.price || 0), images: prodImages, category: (it.product && it.product.category) || 'uncategorized', storeId: it.storeId || storeIds[0] }, update: {} })
-      } catch (e) {
-        console.warn('Could not upsert product', pid, e.message || e)
-      }
-    }
-
-    // create order with orderItems and mark isPaid true
+    // create order and mark isPaid true
     const orderId = randomUUID()
-    const createdOrder = await prisma.order.create({ data: { id: orderId, total: Number(total) || items.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 0)), 0), status: 'ORDER_PLACED', userId: uid, storeId: items[0] ? (items[0].storeId || 'default-store') : 'default-store', addressId: createdAddress.id, isPaid: true, paymentMethod: 'RAZORPAY', paymentProvider: 'RAZORPAY', paymentId: razorpay_payment_id, isCouponUsed: false, coupon: {}, orderItems: { create: items.map(i => ({ productId: i.productId || (i.product && i.product.id) || `prod-${randomUUID()}`, quantity: Number(i.quantity || 1), price: Number(i.price || 0) })) } } })
+    const createdOrder = await mongodb.order.create({
+      id: orderId,
+      userId: uid,
+      items: enrichedItems,
+      total: Number(total) || 0,
+      discountAmount,
+      finalTotal: (Number(total) || 0) - discountAmount,
+      address: address || {},
+      paymentMethod: 'razorpay',
+      paymentId: razorpay_payment_id,
+      couponCode: couponCode || null,
+      status: 'confirmed',
+      isPaid: true,
+    })
 
-    // If localOrderId provided, replace the pending order record with this createdOrder or update it
+    // If localOrderId provided, delete the pending order
     if (localOrderId) {
       try {
-        await prisma.order.delete({ where: { id: localOrderId } })
+        await mongodb.order.delete(localOrderId)
       } catch (e) { /* ignore */ }
     }
 

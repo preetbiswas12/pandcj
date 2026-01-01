@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import prisma from '@/lib/prisma'
+import mongodb from '@/lib/mongodb'
 
 export async function POST(req) {
   try {
@@ -9,15 +9,25 @@ export async function POST(req) {
 
     // ensure user exists minimally
     const uid = userId || `guest-${randomUUID()}`
-    await prisma.user.upsert({ where: { id: uid }, create: { id: uid, name: (address && address.name) || `User ${uid}`, email: (address && address.email) || `${uid}@example.com`, image: '', cart: {} }, update: { name: (address && address.name) || undefined } })
+    await mongodb.user.upsert(uid, { name: (address && address.name) || `User ${uid}`, email: (address && address.email) || `${uid}@example.com` })
 
-    // create address
-    const addrData = address || {}
-    const createdAddress = await prisma.address.create({ data: { userId: uid, name: addrData.name || '', email: addrData.email || '', street: addrData.street || '', city: addrData.city || '', state: addrData.state || '', zip: addrData.zip || '', country: addrData.country || '', phone: addrData.phone || '' } })
-
-    // create pending order with minimal items (do not upsert products now)
+    // create pending order with items
     const orderId = randomUUID()
-    const created = await prisma.order.create({ data: { id: orderId, total: Number(total) || items.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 0)), 0), status: 'PENDING', userId: uid, storeId: items[0] ? (items[0].storeId || 'default-store') : 'default-store', addressId: createdAddress.id, isPaid: false, paymentMethod: 'RAZORPAY', isCouponUsed: false, coupon: {}, expiresAt: new Date(Date.now() + 10 * 60 * 1000), orderItems: { create: items.map(i => ({ productId: i.productId || (i.product && i.product.id) || `prod-${randomUUID()}`, quantity: Number(i.quantity || 1), price: Number(i.price || 0) })) } } })
+    const created = await mongodb.order.create({
+      id: orderId,
+      total: Number(total) || items.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 0)), 0),
+      status: 'pending',
+      userId: uid,
+      items: items.map(i => ({
+        productId: i.productId || (i.product && i.product.id) || `prod-${randomUUID()}`,
+        quantity: Number(i.quantity || 1),
+        price: Number(i.price || 0),
+        storeId: i.storeId || 'default-store'
+      })),
+      address: address || {},
+      paymentMethod: 'razorpay',
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+    })
 
     return new Response(JSON.stringify({ localOrderId: created.id }), { status: 200 })
   } catch (err) {
