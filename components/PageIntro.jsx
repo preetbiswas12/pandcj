@@ -66,7 +66,7 @@ const PageIntro = ({ initial = null }) => {
               <div className="w-10 h-10 rounded bg-gray-100 grid place-items-center">🔄</div>
               <div className="data-item__content">
                 <h4 className="font-medium">Replacement Guaranteed</h4>
-                <p className="text-sm text-muted-foreground">30 days warranty for each product from our store</p>
+                <p className="text-sm text-muted-foreground">7 days warranty for each product from our store</p>
               </div>
             </li>
           </ul>

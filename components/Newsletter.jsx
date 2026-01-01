@@ -16,7 +16,12 @@ const Newsletter = () => {
         }
         setLoading(true)
         try {
-            const res = await fetch('/api/admin/newsletters', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
+            const res = await fetch('/api/admin/newsletters', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ email }),
+                credentials: 'include'
+            })
             const data = await res.json()
             if (res.ok) {
                 setStatus({ type: 'success', message: data.message || 'Subscribed successfully' })
@@ -25,7 +30,8 @@ const Newsletter = () => {
                 setStatus({ type: 'error', message: data.error || 'Subscription failed' })
             }
         } catch (err) {
-            setStatus({ type: 'error', message: 'Network error' })
+            console.error('Newsletter subscription error:', err)
+            setStatus({ type: 'error', message: 'Network error. Please try again.' })
         } finally {
             setLoading(false)
         }
