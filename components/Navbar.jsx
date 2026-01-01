@@ -94,7 +94,7 @@ const Navbar = () => {
                 <div className="fixed inset-0 z-50 bg-white sm:hidden text-slate-700">
                         <div className="flex items-center justify-between p-4 border-b">
                         <Link href="/" className="flex items-center gap-3">
-                            <Image src={assets.pandcjewellery} alt="P&C Jewellery" width={36} height={36} className="rounded" />
+                            
                             <span className="text-2xl font-semibold">P&C<span className="text-yellow-600">Jewellery</span></span>
                         </Link>
                         <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="p-2">
