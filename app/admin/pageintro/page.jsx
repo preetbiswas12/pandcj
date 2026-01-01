@@ -10,7 +10,7 @@ export default function AdminPageIntro() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-      fetch('/api/admin/pageintro', { credentials: 'include' }).then(r => r.json()).then(data => {
+      fetch('/api/admin/pageintro?ts=' + Date.now(), { credentials: 'include' }).then(r => r.json()).then(data => {
       if (data) {
         setTitle(data.title || '')
         setImage(data.image || '')
@@ -23,7 +23,8 @@ export default function AdminPageIntro() {
     if (!file) return
     const reader = new FileReader()
     reader.onload = async () => {
-      const base64 = reader.result.split(',')[1]
+      const dataUrl = reader.result
+      const base64 = dataUrl.split(',')[1]
       setLoading(true)
       try {
         const res = await fetch('/api/admin/stores/upload', {
@@ -33,8 +34,10 @@ export default function AdminPageIntro() {
           body: JSON.stringify({ data: base64, name: file.name })
         })
         const body = await res.json()
+        // Prefer returned URL (Cloudinary or public upload). If not provided (tmp fallback), use the data URL for preview.
         if (body?.url) setImage(body.url)
-        else toast.error('Upload failed')
+        else if (body?.dataUrl) setImage(body.dataUrl)
+        else setImage(dataUrl)
       } catch (err) {
         toast.error('Upload failed')
       } finally { setLoading(false) }
@@ -49,6 +52,17 @@ export default function AdminPageIntro() {
       const body = await res.json()
       if (body?.success) toast.success('Saved')
       else toast.error('Save failed')
+      // refresh values from server to ensure UI matches persisted state
+      if (body?.success) {
+        try {
+          const r = await fetch('/api/admin/pageintro?ts=' + Date.now(), { credentials: 'include' })
+          const d = await r.json()
+          if (d) {
+            setTitle(d.title || '')
+            setImage(d.image || '')
+          }
+        } catch (e) {}
+      }
     } catch (err) { toast.error('Save failed') }
     setLoading(false)
   }
@@ -61,7 +75,7 @@ export default function AdminPageIntro() {
 
       <label className="block mb-2">Image</label>
       <div className="flex items-center gap-4 mb-4">
-        <FileButton accept="image/*" label={loading ? 'Uploading...' : 'Choose image'} onChange={handleUpload} previewUrl={image || assets.slide_1} />
+        <FileButton accept="image/*" label={loading ? 'Uploading...' : 'Choose image'} onChange={handleUpload} previewUrl={image || (assets.slide_1?.src ?? assets.slide_1)} />
       </div>
 
       <div className="flex gap-3">

@@ -7,7 +7,7 @@ const PageIntro = () => {
 
   useEffect(() => {
     let mounted = true
-    fetch('/api/admin/pageintro').then(r => r.json()).then(data => {
+    fetch('/api/admin/pageintro?ts=' + Date.now()).then(r => r.json()).then(data => {
       if (mounted && data) setSettings(data)
     }).catch(() => {})
     return () => { mounted = false }
