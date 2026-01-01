@@ -1,15 +1,15 @@
-'use client'
-// import Banner from "@/components/Banner";
+'use server'
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageIntro from '@/components/PageIntro'
+import { getPageIntro } from '@/lib/pageintro'
 
-export default function PublicLayout({ children }) {
-
+export default async function PublicLayout({ children }) {
+    const settings = await getPageIntro()
     return (
         <>
             <Navbar />
-            <PageIntro />
+            <PageIntro initial={settings} />
             {children}
             <Footer />
         </>

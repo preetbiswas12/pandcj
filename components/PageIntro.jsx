@@ -2,11 +2,12 @@
 import React, { useEffect, useState } from 'react'
 import { assets } from '@/assets/assets'
 
-const PageIntro = () => {
-  const [settings, setSettings] = useState(null)
+const PageIntro = ({ initial = null }) => {
+  const [settings, setSettings] = useState(initial)
 
   useEffect(() => {
     let mounted = true
+    // fetch fresh data in background to keep client in sync
     fetch('/api/admin/pageintro?ts=' + Date.now()).then(r => r.json()).then(data => {
       if (mounted && data) setSettings(data)
     }).catch(() => {})
