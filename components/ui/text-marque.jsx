@@ -28,7 +28,7 @@ const Component = forwardRef(({
     damping: 50,
     stiffness: 400,
   });
-  const velocityFactor = useTransform(smoothVelocity, [0, 100], [0, 2], {
+  const velocityFactor = useTransform(smoothVelocity, [0, 1000], [0, 2], {
     clamp: false,
   });
 
@@ -48,7 +48,7 @@ const Component = forwardRef(({
   useAnimationFrame((t, delta) => {
     if (!hasStarted.current) return;
 
-    let moveBy = directionFactor.current * baseVelocity * (delta / 1000);
+    let moveBy = directionFactor.current * baseVelocity * (delta / 100);
 
     if (scrollDependent) {
       if (velocityFactor.get() < 0) {
