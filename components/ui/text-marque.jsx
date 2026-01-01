@@ -34,7 +34,7 @@ const Component = forwardRef(({
 
   const x = useTransform(baseX, (v) => `${wrap(-20, -45, v)}%`);
 
-  const directionFactor = useRef<number>(1);
+  const directionFactor = useRef(1);
   const hasStarted = useRef(false);
 
   useEffect(() => {
