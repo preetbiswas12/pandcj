@@ -25,7 +25,9 @@ import pandcjewellery from "./pandcjewellery.jpg"
 
     
 export const assets = {
-pandcjewellery}
+pandcjewellery, slide_1, gs_logo, happy_store, upload_area, hero_model_img, hero_product_img1, hero_product_img2, product_img1, product_img2, product_img3, product_img4, product_img5, product_img6, product_img7, product_img8, product_img9, product_img10, product_img11, product_img12,
+profile_pic1, profile_pic2, profile_pic3
+}
 
 export const categories = ["Earrings", "Necklace", "Watch", "Earbuds", "Mouse", "Decoration"];
 
