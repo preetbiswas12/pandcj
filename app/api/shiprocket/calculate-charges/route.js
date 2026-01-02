@@ -121,25 +121,36 @@ export async function POST(req) {
       const ratesData = await ratesRes.json()
 
       console.log('[Shiprocket] 📨 API Response Status:', ratesRes.status)
-      console.log('[Shiprocket] 📨 API Response:', JSON.stringify(ratesData))
+      console.log('[Shiprocket] 📨 Full Response:', JSON.stringify(ratesData, null, 2))
 
       // Check if we got valid rates
       if (ratesData.status_code === 1 && Array.isArray(ratesData.data) && ratesData.data.length > 0) {
         // Get the cheapest courier option
         const bestRate = ratesData.data[0]
-        console.log('[Shiprocket] 📊 Best rate object:', JSON.stringify(bestRate))
+        console.log('[Shiprocket] 📊 Best rate object keys:', Object.keys(bestRate))
+        console.log('[Shiprocket] 📊 Best rate full:', JSON.stringify(bestRate, null, 2))
         
-        const shippingCharge = Number(bestRate.rate || bestRate.rating || 0)
-        const estimatedDays = Number(bestRate.estimated_delivery_days || 3)
+        // Try multiple field names for the rate
+        const shippingCharge = Number(
+          bestRate.rate || 
+          bestRate.rating || 
+          bestRate.freight_charge || 
+          bestRate.total_charge || 
+          bestRate.charges || 
+          0
+        )
+        const estimatedDays = Number(bestRate.estimated_delivery_days || bestRate.delivery_days || 3)
         
         console.log('[Shiprocket] 💰 Extracted charge:', shippingCharge, 'Days:', estimatedDays)
 
         if (!shippingCharge || shippingCharge === 0) {
-          console.error('[Shiprocket] ❌ Invalid rate received:', bestRate)
+          console.error('[Shiprocket] ❌ Invalid rate received - all charge fields were 0 or missing')
+          console.error('[Shiprocket] ❌ Available fields:', bestRate)
           return new Response(
             JSON.stringify({ 
-              error: 'Could not calculate shipping for this location',
-              shippingCharge: null 
+              error: 'Shipping charge could not be extracted from courier response',
+              shippingCharge: null,
+              debug: { bestRate }
             }),
             { status: 400 }
           )
@@ -169,7 +180,14 @@ export async function POST(req) {
         console.error('[Shiprocket] Error:', ratesData.message || ratesData.errors)
         console.error('[Shiprocket] Data:', ratesData.data)
         
-        const errorMsg = ratesData.message || ratesData.status || 'Shipping not available for this location'
+        // Build error message - avoid using raw status codes
+        let errorMsg = 'Shipping not available for this location'
+        if (ratesData.message && ratesData.message !== 'undefined' && !/^\d+$/.test(String(ratesData.message))) {
+          errorMsg = ratesData.message
+        } else if (ratesData.status && ratesData.status !== 'undefined' && !/^\d+$/.test(String(ratesData.status))) {
+          errorMsg = ratesData.status
+        }
+        
         return new Response(
           JSON.stringify({ 
             error: errorMsg,

@@ -10,7 +10,10 @@ export default async function OrderDetailPage({ params }) {
   // Try DB first
   let order = null
   try {
+    console.log('[OrderDetail] 🔍 Fetching order:', id, 'from database')
     order = await prisma.order.findUnique({ where: { id }, include: { orderItems: { include: { product: true } }, address: true } })
+    if (order) console.log('[OrderDetail] ✅ Order found in database')
+    
     if (order && Array.isArray(order.orderItems)) {
       for (const it of order.orderItems) {
         if (!it.product || !it.product.id) {
@@ -19,22 +22,26 @@ export default async function OrderDetailPage({ params }) {
             if (prod) it.product = prod
             else it.product = { id: it.productId || null, name: (it.product && it.product.name) || 'Product', images: [] }
           } catch (e) {
+            console.error('[OrderDetail] ⚠️ Error fetching product:', e.message)
             it.product = { id: it.productId || null, name: (it.product && it.product.name) || 'Product', images: [] }
           }
         }
       }
     }
   } catch (e) {
+    console.error('[OrderDetail] ❌ Database error:', e.message)
     order = null
   }
 
   // Fallback to filesystem if DB not available or order not found
   if (!order) {
+    console.log('[OrderDetail] 📁 Trying filesystem fallback...')
     // try per-store orders first
     const storeOrdersPath = path.join(publicDir, 'stores', storeId, 'orders.json')
 
     if (fs.existsSync(storeOrdersPath)) {
       try {
+        console.log('[OrderDetail] 📂 Checking store orders')
         const raw = fs.readFileSync(storeOrdersPath, 'utf8') || '[]'
         const list = JSON.parse(raw)
         order = list.find(o => o.id === id) || null

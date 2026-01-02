@@ -264,9 +264,20 @@ const OrderSummary = ({ totalPrice, items }) => {
                     setEstimatedDays(data.estimatedDays || null)
                     console.log('[OrderSummary] ✅ Shipping charge set to: ₹' + charge)
                 } else {
-                    // API returned an error
-                    const errorMsg = data.error || data.message || 'Could not calculate shipping for this location'
+                    // API returned an error or invalid data
+                    let errorMsg = data.error || data.message || 'Could not calculate shipping for this location'
+                    
+                    // Ensure we don't show just status codes or numbers as error messages
+                    if (!errorMsg || errorMsg === '200' || errorMsg === '400' || /^\d+$/.test(String(errorMsg))) {
+                        errorMsg = 'Shipping not available for this location'
+                    }
+                    
+                    if (!res.ok && !data.error) {
+                        errorMsg = 'Server error (HTTP ' + res.status + ')'
+                    }
+                    
                     console.error('[OrderSummary] ❌ API error:', errorMsg)
+                    console.error('[OrderSummary] ❌ Response data:', data)
                     toast.error(errorMsg)
                     setShippingCharge(0)
                 }
