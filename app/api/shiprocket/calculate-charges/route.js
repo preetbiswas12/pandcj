@@ -104,18 +104,27 @@ export async function POST(req) {
 
     console.log('[Shiprocket] 📍 From:', PICKUP_PIN, '→ To:', pinCode, '| Weight:', totalWeight, 'kg')
 
-    // Call Shiprocket Rates API with GET query parameters
+    // Call Shiprocket Rates API - try POST first (more reliable)
     try {
-      const ratesUrl = `${SHIPROCKET_BASE_URL}/v1/external/courier/serviceability/?pickup_postcode=${PICKUP_PIN}&delivery_postcode=${pinCode}&cod=0&weight=${totalWeight}`
+      const ratesUrl = `${SHIPROCKET_BASE_URL}/v1/external/courier/serviceability/`
       
-      console.log('[Shiprocket] 🔗 Calling API:', ratesUrl)
+      const requestPayload = {
+        pickup_postcode: PICKUP_PIN,
+        delivery_postcode: pinCode,
+        cod: 0,
+        weight: totalWeight
+      }
+      
+      console.log('[Shiprocket] 🔗 Calling API (POST):', ratesUrl)
+      console.log('[Shiprocket] 📤 Request payload:', JSON.stringify(requestPayload, null, 2))
 
       const ratesRes = await fetch(ratesUrl, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify(requestPayload)
       })
 
       const ratesData = await ratesRes.json()
@@ -123,10 +132,13 @@ export async function POST(req) {
       console.log('[Shiprocket] 📨 API Response Status:', ratesRes.status)
       console.log('[Shiprocket] 📨 Full Response:', JSON.stringify(ratesData, null, 2))
 
-      // Check if we got valid rates
-      if (ratesData.status_code === 1 && Array.isArray(ratesData.data) && ratesData.data.length > 0) {
-        // Get the cheapest courier option
-        const bestRate = ratesData.data[0]
+      // Check if we got valid rates - Shiprocket structure: data.available_courier_companies
+      const couriers = ratesData.data?.available_courier_companies || []
+      console.log('[Shiprocket] 📊 Available couriers:', couriers.length)
+      
+      if (ratesRes.status === 200 && Array.isArray(couriers) && couriers.length > 0) {
+        // Get the first (cheapest/recommended) courier option
+        const bestRate = couriers[0]
         console.log('[Shiprocket] 📊 Best rate object keys:', Object.keys(bestRate))
         console.log('[Shiprocket] 📊 Best rate full:', JSON.stringify(bestRate, null, 2))
         
@@ -175,17 +187,17 @@ export async function POST(req) {
         )
       } else {
         console.error('[Shiprocket] ❌ No rates found')
-        console.error('[Shiprocket] Status Code:', ratesData.status_code)
-        console.error('[Shiprocket] Status Message:', ratesData.status)
+        console.error('[Shiprocket] Status:', ratesRes.status)
+        console.error('[Shiprocket] Couriers available:', couriers.length)
+        console.error('[Shiprocket] Full response status field:', ratesData.status)
         console.error('[Shiprocket] Error:', ratesData.message || ratesData.errors)
-        console.error('[Shiprocket] Data:', ratesData.data)
         
         // Build error message - avoid using raw status codes
         let errorMsg = 'Shipping not available for this location'
         if (ratesData.message && ratesData.message !== 'undefined' && !/^\d+$/.test(String(ratesData.message))) {
           errorMsg = ratesData.message
-        } else if (ratesData.status && ratesData.status !== 'undefined' && !/^\d+$/.test(String(ratesData.status))) {
-          errorMsg = ratesData.status
+        } else if (ratesData.errors && ratesData.errors !== 'undefined' && !/^\d+$/.test(String(ratesData.errors))) {
+          errorMsg = ratesData.errors
         }
         
         return new Response(
@@ -193,7 +205,8 @@ export async function POST(req) {
             error: errorMsg,
             shippingCharge: null,
             details: {
-              statusCode: ratesData.status_code,
+              status: ratesRes.status,
+              couriersFound: couriers.length,
               message: ratesData.message,
               errors: ratesData.errors
             }
