@@ -1,4 +1,3 @@
-import { SHIPROCKET_EMAIL, SHIPROCKET_PASSWORD, SHIPROCKET_BASE_URL } from '@/lib/shiprocket'
 import mongodb from '@/lib/mongodb'
 
 let shiprocketToken = null
@@ -10,6 +9,10 @@ async function getShiprocketToken() {
   }
 
   try {
+    const SHIPROCKET_EMAIL = process.env.SHIPROCKET_EMAIL
+    const SHIPROCKET_PASSWORD = process.env.SHIPROCKET_PASSWORD
+    const SHIPROCKET_BASE_URL = process.env.SHIPROCKET_BASE_URL || 'https://apiv2.shiprocket.in'
+
     const res = await fetch(`${SHIPROCKET_BASE_URL}/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -50,6 +53,7 @@ export async function GET(req) {
 
     // Get city/state from Shiprocket using serviceability endpoint
     const PICKUP_PIN = process.env.SHIPROCKET_PICKUP_PIN || '201304'
+    const SHIPROCKET_BASE_URL = process.env.SHIPROCKET_BASE_URL || 'https://apiv2.shiprocket.in'
     
     const res = await fetch(
       `${SHIPROCKET_BASE_URL}/v1/external/courier/serviceability/?pickup_postcode=${PICKUP_PIN}&delivery_postcode=${pincode}&cod=0&weight=0.5`,
