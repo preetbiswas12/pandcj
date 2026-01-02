@@ -104,27 +104,18 @@ export async function POST(req) {
 
     console.log('[Shiprocket] 📍 From:', PICKUP_PIN, '→ To:', pinCode, '| Weight:', totalWeight, 'kg')
 
-    // Call Shiprocket Rates API - try POST first (more reliable)
+    // Call Shiprocket Rates API with GET (required - POST not supported)
     try {
-      const ratesUrl = `${SHIPROCKET_BASE_URL}/v1/external/courier/serviceability/`
+      const ratesUrl = `${SHIPROCKET_BASE_URL}/v1/external/courier/serviceability/?pickup_postcode=${PICKUP_PIN}&delivery_postcode=${pinCode}&cod=0&weight=${totalWeight}`
       
-      const requestPayload = {
-        pickup_postcode: PICKUP_PIN,
-        delivery_postcode: pinCode,
-        cod: 0,
-        weight: totalWeight
-      }
-      
-      console.log('[Shiprocket] 🔗 Calling API (POST):', ratesUrl)
-      console.log('[Shiprocket] 📤 Request payload:', JSON.stringify(requestPayload, null, 2))
+      console.log('[Shiprocket] 🔗 Calling API (GET):', ratesUrl)
 
       const ratesRes = await fetch(ratesUrl, {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestPayload)
+        }
       })
 
       const ratesData = await ratesRes.json()
