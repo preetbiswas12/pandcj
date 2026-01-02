@@ -4,6 +4,19 @@ import ProductsLoader from '@/components/ProductsLoader'
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
 import { assets } from '@/assets/assets'
+import localFont from 'next/font/local'
+
+const amoria = localFont({
+    src: [
+        {
+            path: '../public/font/AMORIA.otf',
+            weight: '400',
+            style: 'normal',
+        }
+    ],
+    variable: '--font-amoria',
+    fallback: ['sans-serif']
+})
 
 export const metadata = {
     title: "P&C Jewellery",
@@ -15,7 +28,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="en">
+        <html lang="en" className={amoria.variable}>
             <head>
                 <link rel="icon" href={assets.pandcjewellery.src} />
             </head>

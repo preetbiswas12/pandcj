@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        amoria: ['AMORIA', 'sans-serif'],
+        amoria: ['var(--font-amoria)', 'sans-serif'],
       },
     },
   },

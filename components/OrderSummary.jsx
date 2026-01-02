@@ -15,7 +15,6 @@ const OrderSummary = ({ totalPrice, items }) => {
 
     const addressList = useSelector(state => state.address.list);
 
-    const [paymentMethod, setPaymentMethod] = useState('COD');
     const [selectedAddress, setSelectedAddress] = useState(null);
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [couponCodeInput, setCouponCodeInput] = useState('');
@@ -24,6 +23,9 @@ const OrderSummary = ({ totalPrice, items }) => {
     const { isSignedIn, user } = useUser();
     const dispatch = useDispatch();
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [shippingCharge, setShippingCharge] = useState(0);
+    const [estimatedDays, setEstimatedDays] = useState(null);
+    const [loadingShipping, setLoadingShipping] = useState(false);
 
     const handleCouponCode = async (event) => {
         event.preventDefault();
@@ -77,25 +79,27 @@ const OrderSummary = ({ totalPrice, items }) => {
                         storeId: product?.storeId || (it.storeId || 'default-store')
                     }
                 }),
-                total: totalPrice,
+                total: totalPrice + shippingCharge,
+                shippingCharge: shippingCharge,
                 address: selectedAddress || {},
-                paymentMethod,
+                paymentMethod: 'RAZORPAY',
                 userId: user?.id || null
             }
 
-            if (paymentMethod === 'RAZORPAY') {
-                // create local pending order first
-                const pendingRes = await fetch('/api/orders/create-pending', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-                if (!pendingRes.ok) throw new Error('Could not create pending order')
-                const { localOrderId } = await pendingRes.json()
+            // Create local pending order first
+            const pendingRes = await fetch('/api/orders/create-pending', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+            if (!pendingRes.ok) throw new Error('Could not create pending order')
+            const { localOrderId } = await pendingRes.json()
 
-                await loadRazorpayScript()
-                const createRes = await fetch('/api/payments/razorpay/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: totalPrice, localOrderId }) })
-                if (!createRes.ok) throw new Error('Could not create payment')
-                const { razorpayOrderId, amount, currency } = await createRes.json()
-                // start 10 minute expiry timer
-                let timer = null
-                try { timer = setTimeout(async () => {
+            await loadRazorpayScript()
+            const createRes = await fetch('/api/payments/razorpay/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: totalPrice + shippingCharge, localOrderId }) })
+            if (!createRes.ok) throw new Error('Could not create payment')
+            const { razorpayOrderId, amount, currency } = await createRes.json()
+            
+            // Start 10 minute expiry timer
+            let timer = null
+            try { 
+                timer = setTimeout(async () => {
                     try {
                         // mark pending order expired on the server
                         await fetch('/api/orders/expire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ localOrderId }) })
@@ -103,49 +107,62 @@ const OrderSummary = ({ totalPrice, items }) => {
                     try { window.Razorpay && window.Razorpay.close && window.Razorpay.close() } catch (e) {}
                     toast.error('Payment session expired')
                     router.push('/cart')
-                }, 10 * 60 * 1000) } catch (e) { timer = null }
+                }, 10 * 60 * 1000) 
+            } catch (e) { timer = null }
 
-                const options = {
-                    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-                    amount: amount,
-                    currency: currency || 'INR',
-                    name: 'Gocart',
-                    description: 'Order Payment',
-                    order_id: razorpayOrderId,
-                    handler: async function (response) {
+            const options = {
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                amount: amount,
+                currency: currency || 'INR',
+                name: 'Gocart',
+                description: 'Order Payment',
+                order_id: razorpayOrderId,
+                handler: async function (response) {
+                    try {
+                        // clear expiry timer
+                        if (timer) clearTimeout(timer)
+                        const verifyRes = await fetch('/api/payments/razorpay/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature, localOrderId, payload }) })
+                        if (!verifyRes.ok) throw new Error('Payment verification failed')
+                        const data = await verifyRes.json()
+                        
+                        // Create order in Shiprocket for shipping
                         try {
-                            // clear expiry timer
-                            if (timer) clearTimeout(timer)
-                            const verifyRes = await fetch('/api/payments/razorpay/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature, localOrderId, payload }) })
-                            if (!verifyRes.ok) throw new Error('Payment verification failed')
-                            const data = await verifyRes.json()
-                            dispatch(clearCart())
-                            toast.success('Payment successful and order placed')
-                            router.push('/orders')
-                        } catch (err) {
-                            console.error(err)
-                            toast.error('Payment successful but order creation failed')
+                            await fetch('/api/shiprocket/create-order', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    orderId: data.id,
+                                    items: payload.items,
+                                    totalPrice: payload.total,
+                                    deliveryAddress: selectedAddress,
+                                    shippingCharge: shippingCharge,
+                                    userEmail: user?.primaryEmailAddress?.email || '',
+                                    userName: user?.fullName || selectedAddress.name || ''
+                                })
+                            })
+                        } catch (shipErr) {
+                            console.error('Shiprocket order creation failed:', shipErr)
+                            // Don't fail order just because shipping failed
                         }
-                    },
-                    prefill: {
-                        name: selectedAddress.name || '',
-                        email: (user && user.primaryEmailAddress && user.primaryEmailAddress.email) || '',
-                        contact: selectedAddress.phone || ''
-                    },
-                    theme: { color: '#2563eb' }
-                }
-
-                const rzp = new window.Razorpay(options)
-                rzp.open()
-                return
+                        
+                        dispatch(clearCart())
+                        toast.success('Payment successful and order placed')
+                        router.push('/orders')
+                    } catch (err) {
+                        console.error(err)
+                        toast.error('Payment successful but order creation failed')
+                    }
+                },
+                prefill: {
+                    name: selectedAddress.name || '',
+                    email: (user && user.primaryEmailAddress && user.primaryEmailAddress.email) || '',
+                    contact: selectedAddress.phone || ''
+                },
+                theme: { color: '#2563eb' }
             }
 
-            const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-            if (!res.ok) throw new Error('Order failed')
-
-            dispatch(clearCart())
-            toast.success('Order placed')
-            router.push('/orders')
+            const rzp = new window.Razorpay(options)
+            rzp.open()
         } catch (err) {
             console.error(err)
             toast.error('Could not place order')
@@ -195,18 +212,52 @@ const OrderSummary = ({ totalPrice, items }) => {
         }
     }, [isSignedIn])
 
+    // Fetch shipping charges when address or items change
+    useEffect(() => {
+        if (!selectedAddress || items.length === 0) {
+            setShippingCharge(0)
+            setEstimatedDays(null)
+            return
+        }
+
+        const fetchShippingCharge = async () => {
+            setLoadingShipping(true)
+            try {
+                const res = await fetch('/api/shiprocket/calculate-charges', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: items.map(it => {
+                            const product = it.product || it
+                            return {
+                                productId: product?.id,
+                                quantity: Number(it.quantity || 1),
+                                weight: 0.5
+                            }
+                        }),
+                        deliveryAddress: selectedAddress,
+                        coupon: coupon || null
+                    })
+                })
+                const data = await res.json()
+                if (data.shippingCharge) {
+                    setShippingCharge(data.shippingCharge)
+                    setEstimatedDays(data.estimatedDays || null)
+                }
+            } catch (err) {
+                console.error('Failed to fetch shipping charge:', err)
+                setShippingCharge(100) // Default fallback
+            } finally {
+                setLoadingShipping(false)
+            }
+        }
+
+        fetchShippingCharge()
+    }, [selectedAddress, items, coupon])
+
     return (
         <div className='w-full max-w-lg lg:max-w-85 bg-slate-50/30 border border-slate-200 text-slate-500 text-sm rounded-xl p-7'>
             <h2 className='text-xl font-medium text-slate-600'>Payment Summary</h2>
-            <p className='text-slate-400 text-xs my-4'>Payment Method</p>
-            {/* <div className='flex gap-2 items-center mt-1'>
-                <input type="radio" id="COD" name='payment' onChange={() => setPaymentMethod('COD')} checked={paymentMethod === 'COD'} className='accent-gray-500' />
-                <label htmlFor="COD" className='cursor-pointer'>Cash on Delivery</label>
-            </div> */}
-            <div className='flex gap-2 items-center mt-1'>
-                <input type="radio" id="RAZORPAY" name='payment' onChange={() => setPaymentMethod('RAZORPAY')} checked={paymentMethod === 'RAZORPAY'} className='accent-gray-500' />
-                <label htmlFor="RAZORPAY" className='cursor-pointer'>Razorpay UPI</label>
-            </div>
             <div className='my-4 py-4 border-y border-slate-200 text-slate-400'>
                 <p>Address</p>
                 {
@@ -243,8 +294,12 @@ const OrderSummary = ({ totalPrice, items }) => {
                     </div>
                     <div className='flex flex-col gap-1 font-medium text-right'>
                         <p>{currency}{totalPrice.toLocaleString()}</p>
-                        <p>Free</p>
-                        {coupon && <p>{`-${currency}${(coupon.discount / 100 * totalPrice).toFixed(2)}`}</p>}
+                        <div className='flex items-center gap-2'>
+                            <p>{currency}{shippingCharge.toFixed(2)}</p>
+                            {loadingShipping && <span className='text-xs text-slate-400'>calculating...</span>}
+                            {estimatedDays && <span className='text-xs text-green-600'>({estimatedDays} days)</span>}
+                        </div>
+                        {coupon && <p>{`-${currency}${(coupon.discount / 100 * (totalPrice + shippingCharge)).toFixed(2)}`}</p>}
                     </div>
                 </div>
                 {
@@ -264,7 +319,7 @@ const OrderSummary = ({ totalPrice, items }) => {
             </div>
             <div className='flex justify-between py-4'>
                 <p>Total:</p>
-                <p className='font-medium text-right'>{currency}{coupon ? (totalPrice - (coupon.discount / 100 * totalPrice)).toFixed(2) : totalPrice.toLocaleString()}</p>
+                <p className='font-medium text-right'>{currency}{coupon ? ((totalPrice + shippingCharge) - (coupon.discount / 100 * (totalPrice + shippingCharge))).toFixed(2) : (totalPrice + shippingCharge).toLocaleString()}</p>
             </div>
             <button
                 onClick={handlePlaceClick}
