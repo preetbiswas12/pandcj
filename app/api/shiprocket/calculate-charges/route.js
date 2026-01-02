@@ -120,6 +120,7 @@ export async function POST(req) {
 
       const ratesData = await ratesRes.json()
 
+      console.log('[Shiprocket] 📨 API Response Status:', ratesRes.status)
       console.log('[Shiprocket] 📨 API Response:', JSON.stringify(ratesData))
 
       // Check if we got valid rates
@@ -158,11 +159,22 @@ export async function POST(req) {
           { status: 200 }
         )
       } else {
-        console.error('[Shiprocket] ❌ No rates found. Status:', ratesData.status_code, 'Data:', ratesData.data)
+        console.error('[Shiprocket] ❌ No rates found')
+        console.error('[Shiprocket] Status Code:', ratesData.status_code)
+        console.error('[Shiprocket] Status Message:', ratesData.status)
+        console.error('[Shiprocket] Error:', ratesData.message || ratesData.errors)
+        console.error('[Shiprocket] Data:', ratesData.data)
+        
+        const errorMsg = ratesData.message || ratesData.status || 'Shipping not available for this location'
         return new Response(
           JSON.stringify({ 
-            error: 'Shipping not available for this location',
-            shippingCharge: null 
+            error: errorMsg,
+            shippingCharge: null,
+            details: {
+              statusCode: ratesData.status_code,
+              message: ratesData.message,
+              errors: ratesData.errors
+            }
           }),
           { status: 400 }
         )
