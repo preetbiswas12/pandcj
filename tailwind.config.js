@@ -8,7 +8,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        amoria: ['var(--font-amoria)', 'sans-serif'],
+        audiowide: ['Audiowide', 'sans-serif'],
+        'dm-serif': ['DM Serif Text', 'serif'],
+        'noto-serif': ['Noto Serif', 'serif'],
+        heebo: ['Heebo', 'sans-serif'],
+        montserrat: ['Montserrat', 'sans-serif'],
       },
     },
   },

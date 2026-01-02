@@ -1,5 +1,27 @@
 import mongodb from '@/lib/mongodb'
 
+// Sanitize inputs for Shiprocket API
+function sanitizeEmail(email) {
+  if (!email || typeof email !== 'string') return 'customer@example.com'
+  const cleaned = email.trim().toLowerCase()
+  // Basic email validation
+  if (cleaned.includes('@') && cleaned.includes('.')) return cleaned
+  return 'customer@example.com'
+}
+
+function sanitizePhone(phone) {
+  if (!phone) return '9999999999'
+  // Remove all non-digits, keep only first 10 digits
+  const cleaned = phone.toString().replace(/\D/g, '').slice(0, 10)
+  // Pad with 9s if too short
+  return cleaned.padEnd(10, '9')
+}
+
+function sanitizeString(str) {
+  if (!str) return 'N/A'
+  return String(str).trim().slice(0, 100)
+}
+
 // Cache for Shiprocket token
 let cachedToken = null
 let tokenExpiry = null
@@ -51,7 +73,14 @@ export async function POST(req) {
     const body = await req.json()
     const { orderId, items, totalPrice, deliveryAddress, shippingCharge, userEmail, userName } = body
 
+    console.log('[Shiprocket] 📥 Request body keys:', Object.keys(body))
+
     if (!orderId || !items || !deliveryAddress) {
+      console.error('[Shiprocket] ❌ Missing required fields:', { 
+        hasOrderId: !!orderId, 
+        hasItems: !!items, 
+        hasAddress: !!deliveryAddress 
+      })
       return new Response(JSON.stringify({ error: 'Missing required fields: orderId, items, deliveryAddress' }), {
         status: 400
       })
@@ -78,31 +107,31 @@ export async function POST(req) {
 
     // Prepare order data for Shiprocket
     const shiprocketOrder = {
-      order_id: String(orderId),
+      order_id: String(orderId).slice(0, 50),
       order_date: new Date().toISOString().split('T')[0],
       pickup_location_id: Number(SHIPROCKET_PICKUP_LOCATION_ID),
       
       // Billing Information
-      billing_customer_name: deliveryAddress.name || userName || 'Customer',
-      billing_email: userEmail || deliveryAddress.email || 'customer@example.com',
-      billing_phone: deliveryAddress.phone || '9999999999',
-      billing_address: deliveryAddress.line1 || deliveryAddress.address || 'Address',
-      billing_address_2: deliveryAddress.line2 || '',
-      billing_city: deliveryAddress.city || '',
-      billing_state: deliveryAddress.state || '',
-      billing_pincode: String(deliveryAddress.zip || ''),
+      billing_customer_name: sanitizeString(deliveryAddress.name || userName || 'Customer'),
+      billing_email: sanitizeEmail(userEmail || deliveryAddress.email),
+      billing_phone: sanitizePhone(deliveryAddress.phone),
+      billing_address: sanitizeString(deliveryAddress.line1 || deliveryAddress.address || 'Address'),
+      billing_address_2: sanitizeString(deliveryAddress.line2 || ''),
+      billing_city: sanitizeString(deliveryAddress.city || 'City'),
+      billing_state: sanitizeString(deliveryAddress.state || 'State'),
+      billing_pincode: String(deliveryAddress.zip || '').replace(/\D/g, '').slice(0, 6),
       billing_country: 'India',
       
       // Shipping Information (same as billing for India)
       shipping_is_billing: true,
-      shipping_customer_name: deliveryAddress.name || userName || 'Customer',
-      shipping_email: userEmail || deliveryAddress.email || 'customer@example.com',
-      shipping_phone: deliveryAddress.phone || '9999999999',
-      shipping_address: deliveryAddress.line1 || deliveryAddress.address || 'Address',
-      shipping_address_2: deliveryAddress.line2 || '',
-      shipping_city: deliveryAddress.city || '',
-      shipping_state: deliveryAddress.state || '',
-      shipping_pincode: String(deliveryAddress.zip || ''),
+      shipping_customer_name: sanitizeString(deliveryAddress.name || userName || 'Customer'),
+      shipping_email: sanitizeEmail(userEmail || deliveryAddress.email),
+      shipping_phone: sanitizePhone(deliveryAddress.phone),
+      shipping_address: sanitizeString(deliveryAddress.line1 || deliveryAddress.address || 'Address'),
+      shipping_address_2: sanitizeString(deliveryAddress.line2 || ''),
+      shipping_city: sanitizeString(deliveryAddress.city || 'City'),
+      shipping_state: sanitizeString(deliveryAddress.state || 'State'),
+      shipping_pincode: String(deliveryAddress.zip || '').replace(/\D/g, '').slice(0, 6),
       shipping_country: 'India',
       
       // Order Items
@@ -129,7 +158,8 @@ export async function POST(req) {
       height: 10
     }
 
-    console.log('[Shiprocket] Creating order:', { orderId, customerName: shiprocketOrder.billing_customer_name })
+    console.log('[Shiprocket] 🚀 Creating order:', { orderId, customerName: shiprocketOrder.billing_customer_name, itemCount: shiprocketOrder.order_items.length })
+    console.log('[Shiprocket] 📋 Full payload:', JSON.stringify(shiprocketOrder, null, 2).slice(0, 1000) + '...')
 
     // Create order in Shiprocket
     const createRes = await fetch(`${SHIPROCKET_BASE_URL}/v1/external/orders/create/adhoc`, {
@@ -142,13 +172,16 @@ export async function POST(req) {
     })
 
     const createData = await createRes.json()
-    console.log('[Shiprocket] Response:', JSON.stringify(createData).slice(0, 500))
+    console.log('[Shiprocket] 📨 HTTP Status:', createRes.status)
+    console.log('[Shiprocket] 📦 Response:', JSON.stringify(createData, null, 2).slice(0, 1000) + '...')
 
     // Handle both response formats from Shiprocket
     if (createData && (createData.status_code === 1 || createData.success === true)) {
       const shiprocketOrderId = createData.data?.order_id || createData.order_id || String(orderId)
       const shipmentData = createData.data?.shipments?.[0] || createData.shipments?.[0]
       const awbCode = shipmentData?.awb_code || shipmentData?.awb || null
+
+      console.log('[Shiprocket] ✅ Order created with ID:', shiprocketOrderId, '| AWB:', awbCode || 'Pending')
 
       // Save Shiprocket details to order in MongoDB
       try {
@@ -163,9 +196,9 @@ export async function POST(req) {
 
         // Update order with Shiprocket details
         await mongodb.order.update(orderId, updateData)
-        console.log('[Shiprocket] Order details saved to MongoDB')
+        console.log('[Shiprocket] ✅ Order details saved to MongoDB')
       } catch (dbErr) {
-        console.warn('[Shiprocket] Could not save Shiprocket details to MongoDB:', dbErr.message)
+        console.warn('[Shiprocket] ⚠️ Could not save Shiprocket details to MongoDB:', dbErr.message)
         // Don't fail if DB update fails
       }
 
@@ -182,14 +215,17 @@ export async function POST(req) {
     } else {
       // Shiprocket returned an error but order was created locally
       const errorMsg = createData.message || createData.error || 'Unknown Shiprocket error'
-      console.warn('[Shiprocket] Order creation failed:', errorMsg)
+      const errors = createData.errors || createData.error_details || []
+      console.error('[Shiprocket] ❌ Order creation failed:', errorMsg)
+      console.error('[Shiprocket] ❌ Error details:', errors)
 
       return new Response(
         JSON.stringify({
           success: true,
           message: 'Order created locally but Shiprocket sync failed',
           warning: errorMsg,
-          shiprocket_error: createData.errors || createData.error
+          shiprocket_error: errors,
+          note: 'Order is confirmed in our system. Shipping will be created manually or retried.'
         }),
         { status: 200 }
       )

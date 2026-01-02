@@ -129,7 +129,8 @@ const OrderSummary = ({ totalPrice, items }) => {
                         
                         // Create order in Shiprocket for shipping
                         try {
-                            await fetch('/api/shiprocket/create-order', {
+                            console.log('🚀 Creating Shiprocket order for:', data.id)
+                            const shipRes = await fetch('/api/shiprocket/create-order', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -142,8 +143,15 @@ const OrderSummary = ({ totalPrice, items }) => {
                                     userName: user?.fullName || selectedAddress.name || ''
                                 })
                             })
+                            const shipData = await shipRes.json()
+                            console.log('📦 Shiprocket response:', shipData)
+                            if (!shipRes.ok) {
+                                console.warn('⚠️ Shiprocket error:', shipData.warning || shipData.error)
+                            } else {
+                                console.log('✅ Shiprocket order created successfully')
+                            }
                         } catch (shipErr) {
-                            console.error('Shiprocket order creation failed:', shipErr)
+                            console.error('❌ Shiprocket order creation failed:', shipErr.message)
                             // Don't fail order just because shipping failed
                         }
                         

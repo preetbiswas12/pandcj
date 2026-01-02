@@ -1,10 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&family=DM+Serif+Text:ital@0;1&family=Heebo:wght@100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 @import "../node_modules/tw-animate-css/dist/tw-animate.css";
 
 @custom-variant dark (&:is(.dark *));
 
 html {
-    font-family: var(--font-amoria), sans-serif;
+    font-family: 'Montserrat', 'Heebo', sans-serif;
+}
+
+/* Font families available for use */
+.font-audiowide {
+    font-family: 'Audiowide', sans-serif;
+}
+
+.font-serif {
+    font-family: 'DM Serif Text', serif;
+}
+
+.font-noto-serif {
+    font-family: 'Noto Serif', serif;
 }
 
 @layer components {
