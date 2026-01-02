@@ -39,6 +39,11 @@ export async function PUT(req, { params }) {
     }
     
     console.log('PUT /api/admin/products updating id:', id, 'with body:', body)
+    
+    // First check if product exists
+    const exists = await mongodb.product.findById(id)
+    console.log('Product exists check:', exists ? 'YES' : 'NO')
+    
     const product = await mongodb.product.update(id, body)
     
     if (!product) {
