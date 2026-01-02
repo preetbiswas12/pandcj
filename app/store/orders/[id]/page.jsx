@@ -76,9 +76,3 @@ export default async function OrderDetailPage({ params }) {
     </div>
   )
 }
-          ))}
-        </ul>
-      </section>
-    </div>
-  )
-}
