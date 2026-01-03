@@ -1,5 +1,5 @@
 import Razorpay from 'razorpay'
-import prisma from '@/lib/prisma'
+import mongodb from '@/lib/mongodb'
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -18,12 +18,13 @@ export async function POST(req) {
 
     const order = await instance.orders.create({ amount: amt, currency, receipt: rReceipt, payment_capture: 1 })
 
-    // if localOrderId provided, persist mapping
+    // if localOrderId provided, persist mapping in MongoDB
     if (localOrderId) {
       try {
-        await prisma.order.update({ where: { id: localOrderId }, data: { razorpayOrderId: order.id } })
+        await mongodb.order.update(localOrderId, { razorpayOrderId: order.id })
+        console.log('[Razorpay] ✅ Linked Razorpay order to MongoDB order:', order.id, '←→', localOrderId)
       } catch (e) {
-        console.warn('Could not update order with razorpayOrderId', e.message || e)
+        console.warn('[Razorpay] Could not link razorpayOrderId to MongoDB order:', e.message || e)
       }
     }
 

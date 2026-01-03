@@ -123,9 +123,34 @@ const OrderSummary = ({ totalPrice, items }) => {
                     try {
                         // clear expiry timer
                         if (timer) clearTimeout(timer)
-                        const verifyRes = await fetch('/api/payments/razorpay/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature, localOrderId, payload }) })
-                        if (!verifyRes.ok) throw new Error('Payment verification failed')
+                        console.log('💳 Payment successful! Verifying order...')
+                        console.log('[OrderSummary] localOrderId being sent:', localOrderId)
+                        
+                        const verifyRes = await fetch('/api/payments/razorpay/verify', { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ 
+                                razorpay_order_id: response.razorpay_order_id, 
+                                razorpay_payment_id: response.razorpay_payment_id, 
+                                razorpay_signature: response.razorpay_signature, 
+                                localOrderId, 
+                                payload 
+                            }) 
+                        })
+                        
+                        console.log('[OrderSummary] Verify response status:', verifyRes.status)
+                        
+                        if (!verifyRes.ok) {
+                            const errorData = await verifyRes.json()
+                            throw new Error(`Payment verification failed: ${errorData.error || 'Unknown error'}`)
+                        }
+                        
                         const data = await verifyRes.json()
+                        console.log('[OrderSummary] Verify response data:', data)
+                        
+                        if (!data.ok || !data.id) {
+                            throw new Error('Verify response missing order ID')
+                        }
                         
                         // Create order in Shiprocket for shipping
                         try {
@@ -155,12 +180,20 @@ const OrderSummary = ({ totalPrice, items }) => {
                             // Don't fail order just because shipping failed
                         }
                         
+                        console.log('🧹 Clearing cart...')
                         dispatch(clearCart())
-                        toast.success('Payment successful and order placed')
-                        router.push('/orders')
+                        
+                        toast.success('✅ Payment successful and order placed!')
+                        
+                        console.log('📍 Redirecting to /orders...')
+                        // Use setTimeout to ensure cart is cleared before redirect
+                        setTimeout(() => {
+                            console.log('📍 Actually redirecting now...')
+                            router.push('/orders')
+                        }, 500)
                     } catch (err) {
-                        console.error(err)
-                        toast.error('Payment successful but order creation failed')
+                        console.error('❌ Error in payment handler:', err.message || err)
+                        toast.error(err.message || 'Payment verified but order processing failed')
                     }
                 },
                 prefill: {

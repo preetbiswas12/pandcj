@@ -104,9 +104,16 @@ export async function POST(req) {
           discountAmount,
           updatedAt: new Date()
         })
-        console.log('[Razorpay] ✅ Updated pending order to confirmed:', localOrderId, '| Updated order ID:', createdOrder?.id)
+        console.log('[Razorpay] ✅ Updated pending order to confirmed:', localOrderId, '| Updated order:', createdOrder?.id)
+        
+        // If update didn't return the full order, fetch it
+        if (!createdOrder || !createdOrder.id) {
+          createdOrder = await mongodb.order.findById(localOrderId)
+          console.log('[Razorpay] Fetched updated order after update:', createdOrder?.id)
+        }
       } catch (updateErr) {
-        console.warn('[Razorpay] ⚠️ Could not update order, creating new one:', updateErr.message)
+        console.error('[Razorpay] ❌ Error updating order:', updateErr.message, updateErr.stack)
+        console.warn('[Razorpay] Falling back: Creating new order')
         // If update fails, create new order
         const orderId = randomUUID()
         createdOrder = await mongodb.order.create({
@@ -150,6 +157,11 @@ export async function POST(req) {
         status: 'confirmed',
         isPaid: true,
       })
+    }
+
+    if (!createdOrder || !createdOrder.id) {
+      console.error('[Razorpay] ❌ FATAL: No order ID returned!')
+      return new Response(JSON.stringify({ error: 'Could not get order ID' }), { status: 500 })
     }
 
     return new Response(JSON.stringify({ ok: true, id: createdOrder.id }), { status: 200 })
