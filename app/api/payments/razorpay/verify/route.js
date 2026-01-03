@@ -84,28 +84,35 @@ export async function POST(req) {
       }
     }
 
-    // create order and mark isPaid true
-    const orderId = randomUUID()
-    const createdOrder = await mongodb.order.create({
-      id: orderId,
-      userId: uid,
-      items: enrichedItems,
-      total: Number(total) || 0,
-      discountAmount,
-      finalTotal: (Number(total) || 0) - discountAmount,
-      address: address || {},
-      paymentMethod: 'razorpay',
-      paymentId: razorpay_payment_id,
-      couponCode: couponCode || null,
-      status: 'confirmed',
-      isPaid: true,
-    })
-
-    // If localOrderId provided, delete the pending order
+    // Update the pending order to confirmed (don't create new one)
+    let createdOrder
     if (localOrderId) {
-      try {
-        await mongodb.order.delete(localOrderId)
-      } catch (e) { /* ignore */ }
+      // Update existing pending order to confirmed
+      createdOrder = await mongodb.order.update(localOrderId, {
+        status: 'confirmed',
+        isPaid: true,
+        paymentId: razorpay_payment_id,
+        paymentMethod: 'razorpay',
+        finalTotal: (Number(total) || 0) - discountAmount,
+        discountAmount
+      })
+    } else {
+      // Fallback: Create new order if no local order ID
+      const orderId = randomUUID()
+      createdOrder = await mongodb.order.create({
+        id: orderId,
+        userId: uid,
+        items: enrichedItems,
+        total: Number(total) || 0,
+        discountAmount,
+        finalTotal: (Number(total) || 0) - discountAmount,
+        address: address || {},
+        paymentMethod: 'razorpay',
+        paymentId: razorpay_payment_id,
+        couponCode: couponCode || null,
+        status: 'confirmed',
+        isPaid: true,
+      })
     }
 
     return new Response(JSON.stringify({ ok: true, id: createdOrder.id }), { status: 200 })

@@ -122,8 +122,8 @@ export async function POST(req) {
       billing_last_name: sanitizeString(lastName),
       billing_email: sanitizeEmail(userEmail || deliveryAddress.email),
       billing_phone: sanitizePhone(deliveryAddress.phone),
-      billing_address: sanitizeString(deliveryAddress.line1 || deliveryAddress.address || 'Address'),
-      billing_address_2: sanitizeString(deliveryAddress.line2 || ''),
+      billing_address: sanitizeString(deliveryAddress.street || deliveryAddress.line1 || deliveryAddress.address || 'Address'),
+      billing_address_2: sanitizeString(deliveryAddress.line2 || deliveryAddress.landmark || ''),
       billing_city: sanitizeString(deliveryAddress.city || 'City'),
       billing_state: sanitizeString(deliveryAddress.state || 'State'),
       billing_pincode: String(deliveryAddress.zip || '').replace(/\D/g, '').slice(0, 6),
@@ -135,8 +135,8 @@ export async function POST(req) {
       shipping_last_name: sanitizeString(lastName),
       shipping_email: sanitizeEmail(userEmail || deliveryAddress.email),
       shipping_phone: sanitizePhone(deliveryAddress.phone),
-      shipping_address: sanitizeString(deliveryAddress.line1 || deliveryAddress.address || 'Address'),
-      shipping_address_2: sanitizeString(deliveryAddress.line2 || ''),
+      shipping_address: sanitizeString(deliveryAddress.street || deliveryAddress.line1 || deliveryAddress.address || 'Address'),
+      shipping_address_2: sanitizeString(deliveryAddress.line2 || deliveryAddress.landmark || ''),
       shipping_city: sanitizeString(deliveryAddress.city || 'City'),
       shipping_state: sanitizeString(deliveryAddress.state || 'State'),
       shipping_pincode: String(deliveryAddress.zip || '').replace(/\D/g, '').slice(0, 6),
@@ -159,11 +159,11 @@ export async function POST(req) {
       shipping_charges: Number(shippingCharge || 0),
       cod_amount: 0, // Prepaid only, no COD
       
-      // Package dimensions (default)
+      // Package dimensions
       weight: items.reduce((sum, item) => sum + (Number(item.weight || 0.5) * Number(item.quantity || 1)), 0),
-      length: 10,
-      breadth: 10,
-      height: 10
+      length: 35,
+      breadth: 30,
+      height: 3
     }
 
     console.log('[Shiprocket] 🚀 Creating order:', { orderId, customerName: shiprocketOrder.billing_customer_name, itemCount: shiprocketOrder.order_items.length })
