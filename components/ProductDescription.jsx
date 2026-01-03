@@ -120,9 +120,10 @@ const ProductDescription = ({ product = {} }) => {
                                             {Array(5).fill('').map((_, i) => (
                                                 <StarIcon
                                                     key={i}
-                                                    size={12}
-                                                    className='text-transparent sm:size-[16px]'
+                                                    size={14}
+                                                    className='sm:size-4'
                                                     fill={(item?.rating || 0) >= i + 1 ? "#FFD700" : "#D1D5DB"}
+                                                    stroke={(item?.rating || 0) >= i + 1 ? "#FFD700" : "#D1D5DB"}
                                                 />
                                             ))}
                                             <span className="text-xs font-medium text-slate-700 ml-1">

@@ -63,7 +63,7 @@ const ProductCard = ({ product }) => {
                             <p className='font-medium text-xs sm:text-sm text-slate-800 truncate'>{product.name}</p>
                             <div className='flex gap-1 mt-1'>
                                 {Array(5).fill('').map((_, index) => (
-                                    <StarIcon key={index} size={12} className='sm:size-[14px] text-transparent mt-0.5 shrink-0' fill={rating >= index + 1 ? "#00C950" : "#D1D5DB"} />
+                                    <StarIcon key={index} size={12} className='sm:size-[14px] mt-0.5 shrink-0' fill={rating >= index + 1 ? "#00C950" : "#D1D5DB"} stroke={rating >= index + 1 ? "#00C950" : "#D1D5DB"} />
                                 ))}
                             </div>
                         </div>
