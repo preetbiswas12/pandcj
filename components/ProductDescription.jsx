@@ -52,10 +52,15 @@ const ProductDescription = ({ product = {} }) => {
         if (!confirm('Are you sure you want to delete this review?')) return;
         
         try {
+            if (!user?.id) {
+                toast.error('You must be logged in to delete reviews');
+                return;
+            }
+
             const res = await fetch(`/api/ratings/${ratingId}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user?.id }),
+                body: JSON.stringify({ userId: user.id }),
             });
 
             if (!res.ok) {

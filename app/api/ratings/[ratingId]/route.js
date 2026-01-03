@@ -15,13 +15,27 @@ async function getClient() {
 export async function DELETE(req, { params }) {
     try {
         const { ratingId } = params;
-        const body = await req.json();
+        let body = {};
+        try {
+            body = await req.json();
+        } catch (e) {
+            // Body might not be valid JSON
+            console.error('Failed to parse request body:', e);
+        }
+        
         const { userId } = body;
 
         // Validate inputs
-        if (!ratingId || !userId) {
+        if (!ratingId) {
             return new Response(
-                JSON.stringify({ error: 'Rating ID and User ID are required' }),
+                JSON.stringify({ error: 'Rating ID is required' }),
+                { status: 400 }
+            );
+        }
+
+        if (!userId) {
+            return new Response(
+                JSON.stringify({ error: 'User ID is required' }),
                 { status: 400 }
             );
         }
