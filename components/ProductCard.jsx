@@ -2,7 +2,7 @@
 import { StarIcon, Heart, MessageCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { addToWishlist, removeFromWishlist } from '@/lib/features/wishlist/wishlistSlice'
 import { useUser } from '@clerk/nextjs'
@@ -15,6 +15,7 @@ const ProductCard = ({ product }) => {
     const wishlistItems = useSelector(state => state.wishlist?.items || [])
     const inWishlist = wishlistItems.find(i => i.id === product.id)
     const [showReviewForm, setShowReviewForm] = useState(false)
+    const [rating, setRating] = useState(0)
 
     const toggleWishlist = (e) => {
         e.preventDefault()
@@ -23,7 +24,30 @@ const ProductCard = ({ product }) => {
         else dispatch(addToWishlist(product))
     }
 
-    const handleReviewClick = (e) => {
+    // Fetch reviews from API to get real ratings
+    useEffect(() => {
+        if (product?.id) {
+            const fetchReviews = async () => {
+                try {
+                    const res = await fetch(`/api/ratings/product?productId=${product.id}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const reviews = data.data || [];
+                        if (reviews.length > 0) {
+                            const avgRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
+                            setRating(Math.round(avgRating));
+                        } else {
+                            setRating(0);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error fetching reviews:', err);
+                    setRating(0);
+                }
+            };
+            fetchReviews();
+        }
+    }, [product?.id])
         e.preventDefault()
         e.stopPropagation()
         if (user) {
@@ -35,12 +59,6 @@ const ProductCard = ({ product }) => {
     }
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
-
-    // calculate the average rating of the product (guard missing data)
-    let rating = 0
-    if (product && product.rating && Array.isArray(product.rating) && product.rating.length > 0) {
-        rating = Math.round(product.rating.reduce((acc, curr) => acc + (curr.rating || 0), 0) / product.rating.length)
-    }
 
     return (
         <>
