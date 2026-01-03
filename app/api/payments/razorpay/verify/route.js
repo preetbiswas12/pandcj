@@ -65,9 +65,30 @@ export async function POST(req) {
     const enrichedItems = await Promise.all(
       items.map(async (it) => {
         const product = await mongodb.product.findById(it.productId)
+        const cloudinaryCloud = process.env.CLOUDINARY_CLOUD_NAME || 'do2q4f1oj'
+        
+        // Always ensure at least one image - either from product or generate Cloudinary URL
+        let images = product?.images && product.images.length > 0 ? product.images : []
+        
+        // If no images exist, generate Cloudinary URL as fallback
+        if (!images || images.length === 0) {
+          const productName = product?.name || it.name || 'product'
+          const slug = productName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
+          const cloudinaryUrl = `https://res.cloudinary.com/${cloudinaryCloud}/image/upload/v1/products/${slug}`
+          images = [cloudinaryUrl]
+          console.log('[Razorpay] 🖼️ Generated Cloudinary URL for product:', it.productId, images[0])
+        } else {
+          // Even if product has images, add Cloudinary URL as backup
+          const productName = product?.name || it.name || 'product'
+          const slug = productName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
+          const cloudinaryUrl = `https://res.cloudinary.com/${cloudinaryCloud}/image/upload/v1/products/${slug}`
+          images = [...images, cloudinaryUrl]
+          console.log('[Razorpay] 🖼️ Added Cloudinary backup URL for product:', it.productId)
+        }
+        
         return {
           productId: it.productId,
-          product: product || { id: it.productId, name: it.name || 'Unknown', images: it.images || [] },
+          product: product || { id: it.productId, name: it.name || 'Unknown', images },
           quantity: Number(it.quantity) || 1,
           price: Number(it.price) || (product ? product.price : 0),
           storeId: product ? product.storeId : (it.storeId || 'default-store')

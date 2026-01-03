@@ -11,14 +11,19 @@ const OrderItem = ({ order, editable = false, onStatusChange = null, onCancel = 
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$';
     const [ratingModal, setRatingModal] = useState(null);
+    const [failedImages, setFailedImages] = useState(new Set());
     const isCancelled = order.status && String(order.status).toUpperCase().startsWith('CANCEL');
 
     const { ratings } = useSelector(state => state.rating);
     const router = useRouter()
+    
+    const handleImageError = (imageUrl) => {
+        setFailedImages(prev => new Set([...prev, imageUrl]))
+    }
 
     return (
         <>
-            <tr className={`text-sm ${isCancelled ? 'opacity-60 bg-red-50' : ''}`}>
+            <tr className={`text-sm cursor-pointer hover:bg-slate-50 transition ${isCancelled ? 'opacity-60 bg-red-50' : ''}`} onClick={() => !editable && router.push(`/orders/${order.id}`)}>
                 <td className="text-left">
                     <div className="flex flex-col gap-6">
                         {(order?.orderItems || order?.items || []).map((item, index) => {
@@ -30,17 +35,19 @@ const OrderItem = ({ order, editable = false, onStatusChange = null, onCancel = 
                             
                             return (
                             <div key={index} className="flex items-center gap-4">
-                                <div className={`w-20 aspect-square bg-slate-100 flex items-center justify-center rounded-md ${isCancelled ? 'opacity-50' : ''}`}>
-                                    {imageUrl ? (
+                                <div className={`w-20 aspect-square bg-slate-100 flex items-center justify-center rounded-md overflow-hidden ${isCancelled ? 'opacity-50' : ''}`}>
+                                    {imageUrl && !failedImages.has(imageUrl) ? (
                                         <Image
                                             className="h-14 w-auto object-contain"
                                             src={imageUrl}
                                             alt="product_img"
                                             width={50}
                                             height={50}
+                                            onError={() => handleImageError(imageUrl)}
+                                            unoptimized={imageUrl.includes('cloudinary')}
                                         />
                                     ) : (
-                                        <span className="text-slate-400 text-xs text-center">No Image</span>
+                                        <span className="text-slate-400 text-xs text-center px-2">No Image</span>
                                     )}
                                 </div>
                                 <div className="flex flex-col justify-center text-sm">
@@ -52,7 +59,7 @@ const OrderItem = ({ order, editable = false, onStatusChange = null, onCancel = 
                                     <div>
                                         {ratings.find(rating => order.id === rating.orderId && (product?.id || item.productId) === rating.productId)
                                             ? <Rating value={ratings.find(rating => order.id === rating.orderId && (product?.id || item.productId) === rating.productId).rating} />
-                                            : <button onClick={() => setRatingModal({ orderId: order.id, productId: product?.id || item.productId })} className={`text-yellow-500 hover:bg-yellow-50 transition ${(order.status !== "DELIVERED" || isCancelled) && 'hidden'}`}>Rate Product</button>
+                                            : <button onClick={(e) => { e.stopPropagation(); setRatingModal({ orderId: order.id, productId: product?.id || item.productId }) }} className={`text-yellow-500 hover:bg-yellow-50 transition ${(order.status !== "DELIVERED" || isCancelled) && 'hidden'}`}>Rate Product</button>
                                         }</div>
                                     {ratingModal && <RatingModal ratingModal={ratingModal} setRatingModal={setRatingModal} />}
                                 </div>
@@ -77,7 +84,7 @@ const OrderItem = ({ order, editable = false, onStatusChange = null, onCancel = 
                         <div className="flex flex-col gap-2">
                             <select
                                 value={order.status}
-                                onChange={(e) => onStatusChange(order.id, e.target.value)}
+                                onChange={(e) => { e.stopPropagation(); onStatusChange(order.id, e.target.value) }}
                                 className="px-3 py-1 rounded border"
                             >
                                 <option value="ORDER_PLACED">Ordered</option>
@@ -88,9 +95,9 @@ const OrderItem = ({ order, editable = false, onStatusChange = null, onCancel = 
                             </select>
                             <div className="flex items-center gap-2">
                                 {onCancel && (order.status === 'ORDER_PLACED' || order.status === 'PROCESSING') && (
-                                    <button onClick={() => onCancel(order.id)} className="text-red-600 bg-red-50 px-3 py-1 rounded">Cancel</button>
+                                    <button onClick={(e) => { e.stopPropagation(); onCancel(order.id) }} className="text-red-600 bg-red-50 px-3 py-1 rounded">Cancel</button>
                                 )}
-                                <button onClick={() => router.push(`/store/orders/${order.id}`)} className="text-slate-700 bg-slate-100 px-3 py-1 rounded">View</button>
+                                <button onClick={(e) => { e.stopPropagation(); router.push(`/store/orders/${order.id}`) }} className="text-slate-700 bg-slate-100 px-3 py-1 rounded">View</button>
                             </div>
                         </div>
                     ) : (
@@ -108,14 +115,16 @@ const OrderItem = ({ order, editable = false, onStatusChange = null, onCancel = 
                             </div>
                             <div className="flex items-center gap-2 mt-2">
                                 {onCancel && (order.status === 'ORDER_PLACED' || order.status === 'PROCESSING') && !isCancelled && (
-                                    <button onClick={() => onCancel(order.id)} className="text-red-600 bg-red-50 px-3 py-1 rounded text-xs">Cancel</button>
+                                    <button onClick={(e) => { e.stopPropagation(); onCancel(order.id) }} className="text-red-600 bg-red-50 px-3 py-1 rounded text-xs">Cancel</button>
                                 )}
-                                {editable && (
+                                {editable ? (
                                     onView ? (
-                                        <button onClick={() => onView(order)} className="text-slate-700 bg-slate-100 px-3 py-1 rounded text-xs">View</button>
+                                        <button onClick={(e) => { e.stopPropagation(); onView(order) }} className="text-slate-700 bg-slate-100 px-3 py-1 rounded text-xs">View</button>
                                     ) : (
-                                        <button onClick={() => router.push(`/store/orders/${order.id}`)} className="text-slate-700 bg-slate-100 px-3 py-1 rounded text-xs">View</button>
+                                        <button onClick={(e) => { e.stopPropagation(); router.push(`/store/orders/${order.id}`) }} className="text-slate-700 bg-slate-100 px-3 py-1 rounded text-xs">View</button>
                                     )
+                                ) : (
+                                    <button onClick={(e) => { e.stopPropagation(); router.push(`/orders/${order.id}`) }} className="text-blue-600 bg-blue-50 px-3 py-1 rounded text-xs">View Details</button>
                                 )}
                             </div>
                         </>

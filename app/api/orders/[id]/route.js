@@ -1,5 +1,39 @@
 import mongodb from '@/lib/mongodb'
 
+export async function GET(req, { params }) {
+  try {
+    const { id } = await params
+
+    if (!id) {
+      return new Response(
+        JSON.stringify({ error: 'Order ID is required' }),
+        { status: 400 }
+      )
+    }
+
+    // Fetch order from MongoDB
+    const order = await mongodb.order.findById(id)
+
+    if (!order) {
+      return new Response(
+        JSON.stringify({ error: 'Order not found' }),
+        { status: 404 }
+      )
+    }
+
+    return new Response(
+      JSON.stringify(order),
+      { status: 200 }
+    )
+  } catch (err) {
+    console.error('[Orders GET] Error:', err)
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch order' }),
+      { status: 500 }
+    )
+  }
+}
+
 export async function PATCH(req, { params }) {
   try {
     const { id } = await params
