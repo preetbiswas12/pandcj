@@ -4,21 +4,54 @@ import { Star } from 'lucide-react';
 import React, { useState } from 'react'
 import { XIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useUser } from '@clerk/nextjs';
 
 const RatingModal = ({ ratingModal, setRatingModal }) => {
 
+    const { user } = useUser();
     const [rating, setRating] = useState(0);
     const [review, setReview] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async () => {
-        if (rating < 0 || rating > 5) {
-            return toast('Please select a rating');
+        if (rating < 1 || rating > 5) {
+            return toast.error('Please select a rating (1-5 stars)');
         }
-        if (review.length < 5) {
-            return toast('write a short review');
+        if (review.trim().length < 5) {
+            return toast.error('Review must be at least 5 characters');
         }
 
-        setRatingModal(null);
+        try {
+            setLoading(true);
+            const payload = {
+                userId: user?.id,
+                userName: user?.fullName || 'Anonymous',
+                userImage: user?.imageUrl || null,
+                productId: ratingModal?.productId,
+                orderId: ratingModal?.orderId,
+                rating: Number(rating),
+                review: review.trim(),
+            };
+
+            const res = await fetch('/api/ratings/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to submit review');
+            }
+
+            toast.success('Review submitted successfully!');
+            setRatingModal(null);
+        } catch (err) {
+            console.error(err);
+            toast.error(err.message || 'Could not submit review');
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -43,9 +76,14 @@ const RatingModal = ({ ratingModal, setRatingModal }) => {
                     rows='4'
                     value={review}
                     onChange={(e) => setReview(e.target.value)}
+                    disabled={loading}
                 ></textarea>
-                <button onClick={e => toast.promise(handleSubmit(), { loading: 'Submitting...' })} className='w-full bg-yellow-500 text-white py-2 rounded-md hover:bg-yellow-600 transition'>
-                    Submit Rating
+                <button 
+                    onClick={handleSubmit} 
+                    disabled={loading}
+                    className='w-full bg-yellow-500 text-white py-2 rounded-md hover:bg-yellow-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed'
+                >
+                    {loading ? 'Submitting...' : 'Submit Rating'}
                 </button>
             </div>
         </div>
