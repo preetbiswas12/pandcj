@@ -48,8 +48,12 @@ const ProductCard = ({ product }) => {
             fetchReviews();
         }
     }, [product?.id])
-        e.preventDefault()
-        e.stopPropagation()
+
+    const handleReviewClick = (e) => {
+        if (e) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
         if (user) {
             setShowReviewForm(true)
         } else {
