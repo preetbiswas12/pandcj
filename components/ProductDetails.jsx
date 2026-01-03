@@ -76,8 +76,6 @@ const ProductDetails = ({ product = {} }) => {
         else dispatch(addToWishlist({ id: productId, name: product.name, price: product.price, images: product.images || [], category: product.category }))
     }
 
-    const averageRating = ratings.length ? ratings.reduce((acc, item) => acc + (item.rating || 0), 0) / ratings.length : 0;
-
     return (
         <div className="flex max-lg:flex-col gap-12">
             <div className="flex max-sm:flex-col-reverse gap-3">
