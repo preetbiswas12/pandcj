@@ -1,6 +1,7 @@
 import { Toaster } from "react-hot-toast";
 import StoreProvider from "@/app/StoreProvider";
 import ProductsLoader from '@/components/ProductsLoader'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
 import { assets } from '@/assets/assets'
@@ -66,6 +67,7 @@ export default function RootLayout({ children }) {
                 />
             </head>
             <body className="font-amoria antialiased">
+                <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
                 <ClerkProvider>
                     <StoreProvider>
                         <Toaster />
