@@ -68,8 +68,8 @@ const ProductCard = ({ product }) => {
     return (
         <>
             <div className='group max-xl:mx-auto relative'>
-                <Link href={`/product/${generateProductSlug(product.name, product.id)}`} className='block p-2 sm:p-0 rounded-md hover:shadow-sm transition'>
-                    <div className='bg-[#F5F5F5] h-44 sm:h-68 sm:w-60 rounded-lg flex items-center justify-center overflow-hidden'>
+                <Link href={`/product/${generateProductSlug(product.name, product.id)}`} className='block rounded-md hover:shadow-md transition'>
+                    <div className='bg-[#F5F5F5] h-40 sm:h-56 md:h-68 rounded-lg flex items-center justify-center overflow-hidden'>
                         {product?.images && product.images.length > 0 ? (
                             <Image width={500} height={500} className='object-cover w-full h-full' src={product.images[0]} alt={product.name || ''} />
                         ) : (
@@ -81,35 +81,33 @@ const ProductCard = ({ product }) => {
                             <span className="bg-rose-100 text-rose-600 px-2 sm:px-3 py-1 rounded-md font-medium text-xs sm:text-sm">Out of stock</span>
                         </div>
                     )}
-                    <div className='flex items-start justify-between gap-3 text-sm text-slate-800 pt-2 max-w-full'>
-                        <div className='min-w-0 flex-1'>
-                            <p className='font-medium text-xs sm:text-sm text-slate-800 truncate'>{product.name}</p>
-                            <div className='flex gap-1 mt-1'>
-                                {Array(5).fill('').map((_, index) => (
-                                    <StarIcon key={index} size={12} className='sm:size-[14px] mt-0.5 shrink-0' fill={rating >= index + 1 ? "#00C950" : "#D1D5DB"} stroke={rating >= index + 1 ? "#00C950" : "#D1D5DB"} />
-                                ))}
-                            </div>
+                    <div className='pt-2 px-1 sm:px-0'>
+                        <h3 className='font-medium text-xs sm:text-sm md:text-base text-slate-800 line-clamp-2 leading-snug'>{product.name}</h3>
+                        <div className='flex gap-0.5 mt-1.5 mb-1.5'>
+                            {Array(5).fill('').map((_, index) => (
+                                <StarIcon key={index} size={14} className='sm:size-[16px] md:size-[18px] shrink-0' fill={rating >= index + 1 ? "#00C950" : "#D1D5DB"} stroke={rating >= index + 1 ? "#00C950" : "#D1D5DB"} />
+                            ))}
                         </div>
-                        <p className='whitespace-nowrap font-semibold text-xs sm:text-sm'>{currency}{product.price}</p>
+                        <p className='font-semibold text-xs sm:text-sm md:text-base text-slate-900'>{currency}{product.price}</p>
                     </div>
                 </Link>
 
                 {/* Wishlist Button - always visible */}
                 <button 
                     onClick={toggleWishlist} 
-                    className={`absolute right-2 top-2 p-2 sm:p-3 rounded-full transition ${inWishlist ? 'bg-rose-100 text-rose-600' : 'bg-white/90 text-slate-600'} shadow-lg`} 
+                    className={`absolute right-1.5 sm:right-2 top-1.5 sm:top-2 p-1.5 sm:p-2 rounded-full transition ${inWishlist ? 'bg-rose-100 text-rose-600' : 'bg-white/90 text-slate-600'} shadow-lg`} 
                     aria-label="Toggle wishlist"
                 >
-                    <Heart size={16} className='sm:size-[18px]' />
+                    <Heart size={14} className='sm:size-[16px]' />
                 </button>
 
                 {/* Review Button - visible on hover (desktop) and always on mobile */}
                 <button
                     onClick={handleReviewClick}
-                    className='absolute left-2 top-2 p-2 sm:p-3 rounded-full bg-white/90 text-slate-600 shadow-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200'
+                    className='absolute left-1.5 sm:left-2 top-1.5 sm:top-2 p-1.5 sm:p-2 rounded-full bg-white/90 text-slate-600 shadow-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200'
                     aria-label="Write review"
                 >
-                    <MessageCircle size={16} className='sm:size-[18px]' />
+                    <MessageCircle size={14} className='sm:size-[16px]' />
                 </button>
             </div>
 
