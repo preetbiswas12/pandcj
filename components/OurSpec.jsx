@@ -22,3 +22,12 @@ const OurSpec = () => {
 					<div className="w-full flex flex-col items-center justify-center sm:items-start sm:justify-between gap-4 sm:gap-6">
 						<div className="max-w-lg text-white text-center sm:text-left">
 							<h2 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">Subscribe to get discount and affordable prices of jewellery right on release.</h2>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	)
+}
+
+export default OurSpec
