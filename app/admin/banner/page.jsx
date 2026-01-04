@@ -152,16 +152,22 @@ export default function AdminBanner() {
       <div className="mt-6 space-y-6 max-w-3xl">
         <section className="bg-white p-4 rounded border">
           <h3 className="font-semibold">Left (Big) Box</h3>
-          <label className="block mt-2">News Label
+          <label className="block mt-2">News Label <span className="text-xs text-gray-500">(e.g., "NEWS" - the orange badge)</span>
             <input value={settings.left?.newsLabel||''} onChange={e=>setSettings(s=>({...s,left:{...(s.left||{}),newsLabel:e.target.value}}))} className="w-full p-2 border rounded" />
           </label>
-          <label className="block mt-2">News Description
+          <label className="block mt-2">News Description <span className="text-xs text-gray-500">(e.g., "Free Shipping..." - text next to NEWS badge)</span>
             <input value={settings.left?.newsDescription||''} onChange={e=>setSettings(s=>({...s,left:{...(s.left||{}),newsDescription:e.target.value}}))} className="w-full p-2 border rounded" />
           </label>
-          <label className="block mt-2">Price
+          <label className="block mt-2">Main Title <span className="text-xs text-gray-500">(e.g., "Gadgets you'll love. Prices you'll trust." - big heading)</span>
+            <input value={settings.left?.title||''} onChange={e=>setSettings(s=>({...s,left:{...(s.left||{}),title:e.target.value}}))} className="w-full p-2 border rounded" />
+          </label>
+          <label className="block mt-2">Price Label <span className="text-xs text-gray-500">(e.g., "Starts from" - label above price)</span>
+            <input value={settings.left?.priceLabel||''} onChange={e=>setSettings(s=>({...s,left:{...(s.left||{}),priceLabel:e.target.value}}))} className="w-full p-2 border rounded" />
+          </label>
+          <label className="block mt-2">Price <span className="text-xs text-gray-500">(e.g., "3000" - just the number)</span>
             <input value={settings.left?.price||''} onChange={e=>setSettings(s=>({...s,left:{...(s.left||{}),price:e.target.value}}))} className="w-full p-2 border rounded" />
           </label>
-          <label className="block mt-2">Redirect Link
+          <label className="block mt-2">Redirect Link <span className="text-xs text-gray-500">(URL for BUY NOW button)</span>
             <input value={settings.left?.learnMoreLink||''} onChange={e=>setSettings(s=>({...s,left:{...(s.left||{}),learnMoreLink:e.target.value}}))} className="w-full p-2 border rounded" />
           </label>
           <label className="block mt-2">Background Image
@@ -177,11 +183,14 @@ export default function AdminBanner() {
 
         <section className="bg-white p-4 rounded border">
           <h3 className="font-semibold">Top Right Box</h3>
-          <label className="block mt-2">Title
+          <label className="block mt-2">Title <span className="text-xs text-gray-500">(e.g., "Best products")</span>
             <input value={settings.topRight?.title||''} onChange={e=>setSettings(s=>({...s,topRight:{...(s.topRight||{}),title:e.target.value}}))} className="w-full p-2 border rounded" />
           </label>
-          <label className="block mt-2">Link
+          <label className="block mt-2">Link <span className="text-xs text-gray-500">(URL for "View more" link)</span>
             <input value={settings.topRight?.link||''} onChange={e=>setSettings(s=>({...s,topRight:{...(s.topRight||{}),link:e.target.value}}))} className="w-full p-2 border rounded" />
+          </label>
+          <label className="block mt-2">Product Image <span className="text-xs text-gray-500">(right side image)</span>
+            <FileButton accept="image/*" label="Choose image" onChange={(e)=>onFileChange(e,'topRight.image')} previewUrl={settings.topRight?.image} />
           </label>
           <label className="block mt-2">Background Image
             <FileButton accept="image/*" label="Choose image" onChange={(e)=>onFileChange(e,'topRight.bgImage')} previewUrl={settings.topRight?.bgImage} />
@@ -189,27 +198,24 @@ export default function AdminBanner() {
           <label className="block mt-2">Background Color
             <input type="color" value={settings.topRight?.bgColor||"#FED7AA"} onChange={e=>setSettings(s=>({...s,topRight:{...(s.topRight||{}),bgColor:e.target.value}}))} className="w-24 h-10 p-1 border rounded" />
           </label>
-          <label className="block mt-2">Image
-            <FileButton accept="image/*" label="Choose image" onChange={(e)=>onFileChange(e,'topRight.image')} previewUrl={settings.topRight?.image} />
-          </label>
         </section>
 
         <section className="bg-white p-4 rounded border">
           <h3 className="font-semibold">Bottom Right Box</h3>
-          <label className="block mt-2">Title
+          <label className="block mt-2">Title <span className="text-xs text-gray-500">(e.g., "20% discounts")</span>
             <input value={settings.bottomRight?.title||''} onChange={e=>setSettings(s=>({...s,bottomRight:{...(s.bottomRight||{}),title:e.target.value}}))} className="w-full p-2 border rounded" />
           </label>
-          <label className="block mt-2">Link
+          <label className="block mt-2">Link <span className="text-xs text-gray-500">(URL for "View more" link)</span>
             <input value={settings.bottomRight?.link||''} onChange={e=>setSettings(s=>({...s,bottomRight:{...(s.bottomRight||{}),link:e.target.value}}))} className="w-full p-2 border rounded" />
+          </label>
+          <label className="block mt-2">Product Image <span className="text-xs text-gray-500">(right side image)</span>
+            <FileButton accept="image/*" label="Choose image" onChange={(e)=>onFileChange(e,'bottomRight.image')} previewUrl={settings.bottomRight?.image} />
           </label>
           <label className="block mt-2">Background Image
             <FileButton accept="image/*" label="Choose image" onChange={(e)=>onFileChange(e,'bottomRight.bgImage')} previewUrl={settings.bottomRight?.bgImage} />
           </label>
           <label className="block mt-2">Background Color
             <input type="color" value={settings.bottomRight?.bgColor||"#DBEAFE"} onChange={e=>setSettings(s=>({...s,bottomRight:{...(s.bottomRight||{}),bgColor:e.target.value}}))} className="w-24 h-10 p-1 border rounded" />
-          </label>
-          <label className="block mt-2">Image
-            <FileButton accept="image/*" label="Choose image" onChange={(e)=>onFileChange(e,'bottomRight.image')} previewUrl={settings.bottomRight?.image} />
           </label>
         </section>
 
