@@ -23,12 +23,14 @@ export async function GET(req) {
 
     // Get initial value
     const initial = await coll.findOne({ key })
+    console.log(`[Settings Stream] Initial value for key ${key}:`, initial?.value)
 
     const { readable, writable } = new TransformStream()
     const writer = writable.getWriter()
 
     const send = async (obj) => {
       const payload = `event: update\ndata: ${JSON.stringify(obj)}\n\n`
+      console.log(`[Settings Stream] Sending payload:`, payload)
       await writer.write(new TextEncoder().encode(payload))
     }
 
@@ -55,9 +57,11 @@ export async function GET(req) {
     // Listen for changes
     (async () => {
       try {
+        console.log(`[Settings Stream] Listening for changes on key: ${key}`)
         for await (const change of changeStream) {
+          console.log(`[Settings Stream] Change detected:`, change.operationType, 'fullDocument.key:', change.fullDocument?.key)
           if (change.fullDocument && change.fullDocument.key === key) {
-            console.log(`[Settings Stream] Change detected for key: ${key}`, change.operationType)
+            console.log(`[Settings Stream] Sending update for key: ${key}`, change.operationType, 'value:', change.fullDocument.value)
             await send({ type: 'update', data: change.fullDocument.value })
           }
         }
