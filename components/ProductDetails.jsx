@@ -122,12 +122,16 @@ const ProductDetails = ({ product = {} }) => {
                 </div>
             </div>
             <div className="flex-1">
-                <h1 className="text-3xl font-semibold text-slate-800">{product.name}</h1>
-                <div className='flex items-center mt-2'>
-                    {Array(5).fill('').map((_, index) => (
-                        <StarIcon key={index} size={14} className='mt-0.5' fill={averageRating >= index + 1 ? "#00C950" : "#D1D5DB"} stroke={averageRating >= index + 1 ? "#00C950" : "#D1D5DB"} />
-                    ))}
-                    <p className="text-sm ml-3 text-slate-500">{reviewCount} Review{reviewCount !== 1 ? 's' : ''}</p>
+                <h1 className="text-2xl sm:text-3xl font-semibold text-slate-800">{product.name}</h1>
+                <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 mt-2'>
+                    <div className='flex items-center gap-2'>
+                        {Array(5).fill('').map((_, index) => (
+                            <StarIcon key={index} size={16} className='sm:size-[14px] mt-0.5 shrink-0' fill={averageRating >= index + 1 ? "#00C950" : "#D1D5DB"} stroke={averageRating >= index + 1 ? "#00C950" : "#D1D5DB"} />
+                        ))}
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-500 sm:ml-3">
+                        <span className="font-semibold text-slate-700">{averageRating.toFixed(1)}</span> · {reviewCount} Review{reviewCount !== 1 ? 's' : ''}
+                    </p>
                 </div>
                 <div className="flex items-start my-6 gap-3 text-2xl font-semibold text-slate-800">
                     <p> {currency}{product.price} </p>
@@ -137,32 +141,34 @@ const ProductDetails = ({ product = {} }) => {
                     <TagIcon size={14} />
                     <p>Save {product.mrp ? ((product.mrp - product.price) / product.mrp * 100).toFixed(0) : 0}% right now</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 mt-8">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4 mt-6 sm:mt-8">
                     {cart[productId] && (
-                        <div className="flex flex-col gap-3">
-                            <p className="text-lg text-slate-800 font-semibold">Quantity</p>
+                        <div className="flex flex-col gap-2">
+                            <p className="text-base sm:text-lg text-slate-800 font-semibold">Quantity</p>
                             <Counter productId={productId} />
                         </div>
                     )}
-                    <div className="flex gap-3 flex-1 sm:flex-initial flex-col sm:flex-row">
-                        <button onClick={() => !cart[productId] ? addToCartHandler() : router.push('/cart')} className="w-full sm:w-auto bg-slate-800 text-white px-6 py-3 text-sm font-medium rounded hover:bg-slate-900 active:scale-95 transition">
+                    <div className="flex gap-2 sm:gap-3 flex-col sm:flex-row flex-1 sm:flex-initial">
+                        <button onClick={() => !cart[productId] ? addToCartHandler() : router.push('/cart')} className="w-full sm:w-auto bg-slate-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded hover:bg-slate-900 active:scale-95 transition">
                             {!cart[productId] ? 'Add to Cart' : 'View Cart'}
                         </button>
-                        <button title="Add to wishlist" onClick={toggleWishlist} className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded ${inWishlist ? 'bg-rose-100 text-rose-600' : 'bg-white border'} border-slate-200`}>
-                            <Heart size={16} />
-                            <span>{inWishlist ? 'In Wishlist' : 'Add to Wishlist'}</span>
+                        <button title="Add to wishlist" onClick={toggleWishlist} className={`w-full sm:w-auto flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded text-xs sm:text-sm font-medium ${inWishlist ? 'bg-rose-100 text-rose-600' : 'bg-white border'} border-slate-200`}>
+                            <Heart size={16} className="shrink-0" />
+                            <span className="hidden sm:inline">{inWishlist ? 'In Wishlist' : 'Add to Wishlist'}</span>
+                            <span className="sm:hidden">{inWishlist ? 'Saved' : 'Wishlist'}</span>
                         </button>
                         {user && (
-                            <button onClick={() => setShowReviewForm(true)} className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition font-medium text-sm">
-                                <MessageCircle size={16} />
-                                <span>Write Review</span>
+                            <button onClick={() => setShowReviewForm(true)} className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition font-medium text-xs sm:text-sm">
+                                <MessageCircle size={16} className="shrink-0" />
+                                <span className="hidden sm:inline">Write Review</span>
+                                <span className="sm:hidden">Review</span>
                             </button>
                         )}
                     </div>
                 </div>
                 <hr className="border-gray-300 my-5" />
                 <div className="flex flex-col gap-4 text-slate-500">
-                    <p className="flex gap-3"> <EarthIcon className="text-slate-400" /> Free shipping worldwide </p>
+                    <p className="flex gap-3"> <EarthIcon className="text-slate-400" /> Shipping Worldwide , T&C apply. </p>
                     <p className="flex gap-3"> <CreditCardIcon className="text-slate-400" /> 100% Secured Payment </p>
                     <p className="flex gap-3"> <UserIcon className="text-slate-400" /> Trusted by top brands </p>
                 </div>

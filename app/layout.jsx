@@ -9,7 +9,7 @@ import { organizationSchema, eCommerceSchema } from '@/lib/seoSchema'
 
 export const metadata = {
     title: "P&C Jewellery - Premium Jewelry Store",
-    description: "P&C Jewellery is your one stop for all kinds of premium jewelry. Explore exquisite designs in earrings, necklaces, and more with free shipping worldwide.",
+    description: "P&C Jewellery is your one stop for all kinds of premium jewelry. Explore exquisite designs in earrings, necklaces, and more with free shipping worldwide, T&C apply.",
     keywords: "jewelry, earrings, necklaces, premium jewelry, online jewelry store, pandcjewellery",
     icons: {
         icon: '/assets/pandcjewellery.jpg'

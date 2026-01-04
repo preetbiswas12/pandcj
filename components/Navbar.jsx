@@ -102,12 +102,13 @@ const Navbar = () => {
                         </button>
                     </div>
                     <div className="p-6">
-                        <nav className="flex flex-col gap-4">
-                            <Link href="/shop" onClick={() => setMobileOpen(false)} className="text-lg">Shop</Link>
-                            <Link href="/orders" onClick={() => setMobileOpen(false)} className="text-lg">Orders</Link>
-                            <Link href="/cart" onClick={() => setMobileOpen(false)} className="text-lg">Cart</Link>
-                            <Link href="/wishlist" onClick={() => setMobileOpen(false)} className="text-lg">Wishlist</Link>
-                            <Link href="/about" onClick={() => setMobileOpen(false)} className="text-lg">About</Link>
+                        <nav className="flex flex-col gap-3 mb-6 pb-6 border-b">
+                            <Link href="/" onClick={() => setMobileOpen(false)} className="text-base font-medium hover:text-yellow-600 transition">Home</Link>
+                            <Link href="/shop" onClick={() => setMobileOpen(false)} className="text-base font-medium hover:text-yellow-600 transition">Shop</Link>
+                            <Link href="/orders" onClick={() => setMobileOpen(false)} className="text-base font-medium hover:text-yellow-600 transition">Orders</Link>
+                            <Link href="/cart" onClick={() => setMobileOpen(false)} className="text-base font-medium hover:text-yellow-600 transition">Cart</Link>
+                            <Link href="/wishlist" onClick={() => setMobileOpen(false)} className="text-base font-medium hover:text-yellow-600 transition">Wishlist</Link>
+                            <Link href="/about" onClick={() => setMobileOpen(false)} className="text-base font-medium hover:text-yellow-600 transition">About</Link>
                         </nav>
 
                         <form onSubmit={handleSearch} className="mt-6">
