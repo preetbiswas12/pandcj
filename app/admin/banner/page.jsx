@@ -11,7 +11,7 @@ export default function AdminBanner() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/admin/banner', { credentials: 'include' })
+      const res = await fetch(`/api/admin/banner?ts=${Date.now()}`, { credentials: 'include' })
       const data = await res.json()
       setSettings(data || {})
     } catch (err) {
@@ -21,7 +21,62 @@ export default function AdminBanner() {
     }
   }
 
-  useEffect(() => { fetchSettings() }, [])
+  useEffect(() => { 
+    fetchSettings()
+
+    // Set up EventSource for real-time updates
+    let mounted = true
+    let es
+    let pollInterval
+
+    const fetchLatest = async () => {
+      try {
+        const res = await fetch(`/api/admin/banner?ts=${Date.now()}`, { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          if (mounted && data) {
+            console.log('[AdminBanner] Poll fetched:', data)
+            setSettings(data)
+          }
+        }
+      } catch (e) {
+        console.error('[AdminBanner] Poll error:', e)
+      }
+    }
+
+    // Poll every 3 seconds for updates as fallback
+    pollInterval = setInterval(fetchLatest, 3000)
+
+    try {
+      es = new EventSource('/api/settings/stream?key=banner')
+      console.log('[AdminBanner] EventSource connected')
+      
+      es.addEventListener('update', (ev) => {
+        try {
+          const msg = JSON.parse(ev.data)
+          console.log('[AdminBanner] EventSource update received:', msg)
+          if (mounted && msg && msg.data) {
+            setSettings(msg.data)
+          }
+        } catch (e) {
+          console.error('[AdminBanner] Parse error:', e)
+        }
+      })
+
+      es.onerror = () => {
+        console.error('[AdminBanner] EventSource error')
+        if (es) es.close()
+      }
+    } catch (e) {
+      console.error('[AdminBanner] EventSource setup error:', e)
+    }
+
+    return () => {
+      mounted = false
+      if (es) es.close()
+      if (pollInterval) clearInterval(pollInterval)
+    }
+  }, [])
 
   const handleFile = async (file) => {
     if (!file) return ''

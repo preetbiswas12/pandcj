@@ -10,12 +10,67 @@ export default function AdminPageIntro() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-      fetch('/api/admin/pageintro?ts=' + Date.now(), { credentials: 'include' }).then(r => r.json()).then(data => {
+    fetch('/api/admin/pageintro?ts=' + Date.now(), { credentials: 'include' }).then(r => r.json()).then(data => {
       if (data) {
         setTitle(data.title || '')
         setImage(data.image || '')
       }
     }).catch(() => {})
+
+    // Set up EventSource for real-time updates
+    let mounted = true
+    let es
+    let pollInterval
+
+    const fetchLatest = async () => {
+      try {
+        const res = await fetch(`/api/admin/pageintro?ts=${Date.now()}`, { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          if (mounted && data) {
+            console.log('[AdminPageIntro] Poll fetched:', data)
+            setTitle(data.title || '')
+            setImage(data.image || '')
+          }
+        }
+      } catch (e) {
+        console.error('[AdminPageIntro] Poll error:', e)
+      }
+    }
+
+    // Poll every 3 seconds for updates as fallback
+    pollInterval = setInterval(fetchLatest, 3000)
+
+    try {
+      es = new EventSource('/api/settings/stream?key=pageintro')
+      console.log('[AdminPageIntro] EventSource connected')
+      
+      es.addEventListener('update', (ev) => {
+        try {
+          const msg = JSON.parse(ev.data)
+          console.log('[AdminPageIntro] EventSource update received:', msg)
+          if (mounted && msg && msg.data) {
+            setTitle(msg.data.title || '')
+            setImage(msg.data.image || '')
+          }
+        } catch (e) {
+          console.error('[AdminPageIntro] Parse error:', e)
+        }
+      })
+
+      es.onerror = () => {
+        console.error('[AdminPageIntro] EventSource error')
+        if (es) es.close()
+      }
+    } catch (e) {
+      console.error('[AdminPageIntro] EventSource setup error:', e)
+    }
+
+    return () => {
+      mounted = false
+      if (es) es.close()
+      if (pollInterval) clearInterval(pollInterval)
+    }
   }, [])
 
   async function handleUpload(e) {
