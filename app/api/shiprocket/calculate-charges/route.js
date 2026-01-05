@@ -80,7 +80,7 @@ export async function POST(req) {
       )
     }
 
-    // Get Shiprocket token
+    // Get Shiprocket token to verify PIN serviceability
     const token = await getShiprocketToken()
     if (!token) {
       console.error('[Shiprocket] ❌ Could not obtain authentication token')
@@ -93,22 +93,18 @@ export async function POST(req) {
       )
     }
 
-    // Calculate total weight
-    const totalWeight = items.reduce((sum, item) => {
-      return sum + (Number(item.weight || 0.5) * Number(item.quantity || 1))
-    }, 0)
-
     const pinCode = String(deliveryAddress.zip)
     const SHIPROCKET_BASE_URL = process.env.SHIPROCKET_BASE_URL || 'https://apiv2.shiprocket.in'
     const PICKUP_PIN = process.env.SHIPROCKET_PICKUP_PIN || '110001'
+    const SINGLE_ITEM_WEIGHT = Number(process.env.SINGLE_ITEM_WEIGHT || 0.5) // Weight of 1 item for shipping calculation
 
-    console.log('[Shiprocket] 📍 From:', PICKUP_PIN, '→ To:', pinCode, '| Weight:', totalWeight, 'kg')
+    console.log('[Shiprocket] 📍 From:', PICKUP_PIN, '→ To:', pinCode, '| Weight: ' + SINGLE_ITEM_WEIGHT + ' kg (single item)')
 
-    // Call Shiprocket Rates API with GET (required - POST not supported)
+    // Call Shiprocket to check serviceability and get rate for 1 item weight (NOT total cart weight)
     try {
-      const ratesUrl = `${SHIPROCKET_BASE_URL}/v1/external/courier/serviceability/?pickup_postcode=${PICKUP_PIN}&delivery_postcode=${pinCode}&cod=0&weight=${totalWeight}`
+      const ratesUrl = `${SHIPROCKET_BASE_URL}/v1/external/courier/serviceability/?pickup_postcode=${PICKUP_PIN}&delivery_postcode=${pinCode}&cod=0&weight=${SINGLE_ITEM_WEIGHT}`
       
-      console.log('[Shiprocket] 🔗 Calling API (GET):', ratesUrl)
+      console.log('[Shiprocket] 🔗 Checking rates for PIN:', pinCode, 'with weight:', SINGLE_ITEM_WEIGHT, 'kg')
 
       const ratesRes = await fetch(ratesUrl, {
         method: 'GET',
@@ -121,45 +117,28 @@ export async function POST(req) {
       const ratesData = await ratesRes.json()
 
       console.log('[Shiprocket] 📨 API Response Status:', ratesRes.status)
-      console.log('[Shiprocket] 📨 Full Response:', JSON.stringify(ratesData, null, 2))
 
       // Check if we got valid rates - Shiprocket structure: data.available_courier_companies
       const couriers = ratesData.data?.available_courier_companies || []
       console.log('[Shiprocket] 📊 Available couriers:', couriers.length)
       
       if (ratesRes.status === 200 && Array.isArray(couriers) && couriers.length > 0) {
-        // Get the first (cheapest/recommended) courier option
+        // Get the best rate for this PIN
         const bestRate = couriers[0]
-        console.log('[Shiprocket] 📊 Best rate object keys:', Object.keys(bestRate))
-        console.log('[Shiprocket] 📊 Best rate full:', JSON.stringify(bestRate, null, 2))
-        console.log('[Shiprocket] 🔍 Debugging rates:')
-        console.log('  - rate:', bestRate.rate)
-        console.log('  - rating:', bestRate.rating)
-        console.log('  - freight_charge:', bestRate.freight_charge)
-        console.log('  - total_charge:', bestRate.total_charge)
-        console.log('  - charges:', bestRate.charges)
-        console.log('  - weightage_charge:', bestRate.weightage_charge)
+        const estimatedDays = Number(bestRate.estimated_delivery_days || 2)
         
-        // Use total_charge (NOT rate which is per-kg)
-        const shippingCharge = Number(
-          bestRate.total_charge || 
-          bestRate.freight_charge || 
-          bestRate.charges || 
-          bestRate.rate || 
-          0
-        )
-        const estimatedDays = Number(bestRate.estimated_delivery_days || bestRate.delivery_days || 3)
+        // Extract the actual shipping charge from Shiprocket for 1 item
+        const shippingCharge = Number(bestRate.freight_charge || bestRate.rate || 0)
         
-        console.log('[Shiprocket] 💰 Extracted charge:', shippingCharge, 'Days:', estimatedDays)
+        console.log('[Shiprocket] 📊 Best rate for PIN', pinCode + ':', '₹' + shippingCharge)
+        console.log('[Shiprocket] ✅ PIN is serviceable. Delivery days:', estimatedDays)
 
         if (!shippingCharge || shippingCharge === 0) {
-          console.error('[Shiprocket] ❌ Invalid rate received - all charge fields were 0 or missing')
-          console.error('[Shiprocket] ❌ Available fields:', bestRate)
+          console.error('[Shiprocket] ❌ Invalid rate received')
           return new Response(
             JSON.stringify({ 
-              error: 'Shipping charge could not be extracted from courier response',
-              shippingCharge: null,
-              debug: { bestRate }
+              error: 'Could not extract shipping rate for PIN ' + pinCode,
+              shippingCharge: null
             }),
             { status: 400 }
           )
@@ -172,41 +151,25 @@ export async function POST(req) {
           finalCharge = Math.max(0, shippingCharge - discount)
         }
 
-        console.log('[Shiprocket] ✅ Charge calculated: ₹' + finalCharge + ' (estimated ' + estimatedDays + ' days)')
+        console.log('[Shiprocket] ✅ Final shipping charge: ₹' + finalCharge + ' (for PIN ' + pinCode + ', estimated ' + estimatedDays + ' days)')
 
         return new Response(
           JSON.stringify({
             shippingCharge: Math.round(finalCharge),
             estimatedDays,
-            message: 'Shipping charge from Shiprocket'
+            message: 'Shipping charge for PIN ' + pinCode
           }),
           { status: 200 }
         )
       } else {
-        console.error('[Shiprocket] ❌ No rates found')
+        console.error('[Shiprocket] ❌ PIN not serviceable')
         console.error('[Shiprocket] Status:', ratesRes.status)
         console.error('[Shiprocket] Couriers available:', couriers.length)
-        console.error('[Shiprocket] Full response status field:', ratesData.status)
-        console.error('[Shiprocket] Error:', ratesData.message || ratesData.errors)
-        
-        // Build error message - avoid using raw status codes
-        let errorMsg = 'Shipping not available for this location'
-        if (ratesData.message && ratesData.message !== 'undefined' && !/^\d+$/.test(String(ratesData.message))) {
-          errorMsg = ratesData.message
-        } else if (ratesData.errors && ratesData.errors !== 'undefined' && !/^\d+$/.test(String(ratesData.errors))) {
-          errorMsg = ratesData.errors
-        }
         
         return new Response(
           JSON.stringify({ 
-            error: errorMsg,
-            shippingCharge: null,
-            details: {
-              status: ratesRes.status,
-              couriersFound: couriers.length,
-              message: ratesData.message,
-              errors: ratesData.errors
-            }
+            error: 'Shipping not available for PIN ' + pinCode,
+            shippingCharge: null
           }),
           { status: 400 }
         )
@@ -216,7 +179,7 @@ export async function POST(req) {
       console.error('[Shiprocket] ❌ API call failed:', shiprocketErr.message)
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to fetch shipping rates: ' + shiprocketErr.message,
+          error: 'Failed to verify delivery PIN: ' + shiprocketErr.message,
           shippingCharge: null 
         }),
         { status: 500 }
