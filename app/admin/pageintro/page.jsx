@@ -8,6 +8,8 @@ export default function AdminPageIntro() {
   const [title, setTitle] = useState('')
   const [image, setImage] = useState('')
   const [loading, setLoading] = useState(false)
+  const autoSaveTimeoutRef = React.useRef(null)
+  const hasUnsavedChangesRef = React.useRef(false)
 
   useEffect(() => {
     fetch('/api/admin/pageintro?ts=' + Date.now(), { credentials: 'include' }).then(r => r.json()).then(data => {
@@ -25,17 +27,20 @@ export default function AdminPageIntro() {
 
     const fetchLatest = async () => {
       try {
-        const res = await fetch(`/api/admin/pageintro?ts=${Date.now()}`, { credentials: 'include' })
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 2000) // 2s timeout
+        const res = await fetch(`/api/admin/pageintro?ts=${Date.now()}`, { credentials: 'include', signal: controller.signal })
+        clearTimeout(timeout)
         if (res.ok) {
           const data = await res.json()
-          if (mounted && data) {
+          if (mounted && data && !hasUnsavedChangesRef.current) {
             console.log('[AdminPageIntro] Poll fetched:', data)
             setTitle(data.title || '')
             setImage(data.image || '')
           }
         }
       } catch (e) {
-        console.error('[AdminPageIntro] Poll error:', e)
+        if (e.name !== 'AbortError') console.error('[AdminPageIntro] Poll error:', e)
       }
     }
 
@@ -109,9 +114,27 @@ export default function AdminPageIntro() {
         })
         const body = await res.json()
         // Prefer returned URL (Cloudinary or public upload). If not provided (tmp fallback), use the data URL for preview.
-        if (body?.url) setImage(body.url)
-        else if (body?.dataUrl) setImage(body.dataUrl)
-        else setImage(dataUrl)
+        const uploadedUrl = body?.url || body?.dataUrl || dataUrl
+        setImage(uploadedUrl)
+        
+        // Auto-save the image immediately after upload
+        hasUnsavedChangesRef.current = true
+        try {
+          const saveRes = await fetch('/api/admin/pageintro', { 
+            method: 'POST', 
+            credentials: 'include', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ title, image: uploadedUrl }) 
+          })
+          const saveBody = await saveRes.json()
+          if (saveBody?.success) {
+            console.log('[AdminPageIntro] Image auto-saved successfully')
+            hasUnsavedChangesRef.current = false
+            toast.success('Image updated')
+          }
+        } catch (err) {
+          console.error('[AdminPageIntro] Auto-save failed:', err)
+        }
       } catch (err) {
         toast.error('Upload failed')
       } finally { setLoading(false) }
@@ -124,10 +147,10 @@ export default function AdminPageIntro() {
     try {
       const res = await fetch('/api/admin/pageintro', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, image }) })
       const body = await res.json()
-      if (body?.success) toast.success('Saved')
-      else toast.error('Save failed')
-      // refresh values from server to ensure UI matches persisted state
       if (body?.success) {
+        toast.success('Saved')
+        hasUnsavedChangesRef.current = false
+        // refresh values from server to ensure UI matches persisted state
         try {
           const r = await fetch('/api/admin/pageintro?ts=' + Date.now(), { credentials: 'include' })
           const d = await r.json()
@@ -137,6 +160,7 @@ export default function AdminPageIntro() {
           }
         } catch (e) {}
       }
+      else toast.error('Save failed')
     } catch (err) { toast.error('Save failed') }
     setLoading(false)
   }
@@ -150,7 +174,10 @@ export default function AdminPageIntro() {
           <label className="block text-sm font-medium mb-2 text-slate-700">Title</label>
           <input 
             value={title} 
-            onChange={(e) => setTitle(e.target.value)} 
+            onChange={(e) => {
+              setTitle(e.target.value)
+              hasUnsavedChangesRef.current = true
+            }} 
             className="w-full p-2 sm:p-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             placeholder="Enter page title"
           />
