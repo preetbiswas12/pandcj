@@ -1,4 +1,3 @@
-'use client'
 import ProductDescription from "@/components/ProductDescription";
 import ProductDetails from "@/components/ProductDetails";
 import { useParams, useRouter } from "next/navigation";

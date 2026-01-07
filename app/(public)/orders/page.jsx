@@ -1,4 +1,3 @@
-"use client"
 import PageTitle from "@/components/PageTitle"
 import { useState, useEffect } from "react";
 import OrderItem from "@/components/OrderItem";

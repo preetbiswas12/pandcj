@@ -1,4 +1,3 @@
-"use client"
 import PageTitle from '@/components/PageTitle'
 import Image from 'next/image'
 import { useSelector, useDispatch } from 'react-redux'
