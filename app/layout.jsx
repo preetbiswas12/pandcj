@@ -5,7 +5,6 @@ import GoogleAnalytics from '@/components/GoogleAnalytics'
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
 import { assets } from '@/assets/assets'
-import { organizationSchema, eCommerceSchema } from '@/lib/seoSchema'
 
 export const metadata = {
     title: "P&C Jewellery - Premium Jewelry Store",
@@ -29,20 +28,6 @@ export const metadata = {
             }
         ]
     },
-    robots: {
-        index: true,
-        follow: true,
-        googleBot: {
-            index: true,
-            follow: true,
-            'max-video-preview': -1,
-            'max-image-preview': 'large',
-            'max-snippet': -1
-        }
-    },
-    alternates: {
-        canonical: 'https://pandcjewellery.com'
-    },
     metadataBase: new URL('https://pandcjewellery.com')
 };
 
@@ -59,21 +44,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 {/* End Google Tag Manager */}
                 
                 <link rel="icon" href={assets.pandcjewellery.src} />
-                <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
                 <meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_CODE" />
                 <meta name="msvalidate.01" content="YOUR_BING_VERIFICATION_CODE" />
-                
-                {/* Structured Data - Organization */}
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-                />
-                
-                {/* Structured Data - E-Commerce */}
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(eCommerceSchema) }}
-                />
             </head>
             <body className="font-amoria antialiased">
                 {/* Google Tag Manager (noscript) */}

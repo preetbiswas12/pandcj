@@ -7,6 +7,17 @@ import { removeFromWishlist } from '@/lib/features/wishlist/wishlistSlice'
 import { Trash2Icon } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
+export const metadata = {
+    robots: {
+        index: false,
+        follow: false,
+        googleBot: {
+            index: false,
+            follow: false,
+        }
+    }
+};
+
 export default function WishlistPage() {
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
     const wishlistItems = useSelector(state => state.wishlist?.items || [])

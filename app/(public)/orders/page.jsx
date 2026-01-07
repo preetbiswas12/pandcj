@@ -4,6 +4,17 @@ import { useState, useEffect } from "react";
 import OrderItem from "@/components/OrderItem";
 import { useUser } from '@clerk/nextjs'
 
+export const metadata = {
+    robots: {
+        index: false,
+        follow: false,
+        googleBot: {
+            index: false,
+            follow: false,
+        }
+    }
+};
+
 export default function Orders() {
     const { isSignedIn, user } = useUser()
     const [orders, setOrders] = useState([])
