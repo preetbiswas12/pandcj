@@ -42,13 +42,13 @@ const Navbar = () => {
 
                     <Link href="/" className="relative text-4xl font-semibold flex items-center gap-3">
                         
-                        <span className={`text-2xl font-semibold ${scrolled ? 'text-white' : 'text-slate-800'}`}><span className="text-yellow-600">P&C</span>Jewellery<span className="text-yellow-600 text-4xl leading-0">.</span></span>
+                        <span className="text-2xl font-semibold"><span className="text-yellow-600">P&C</span><span className="text-cyan-500">Jewellery</span><span className="text-yellow-600 text-4xl leading-0">.</span></span>
                     </Link>
 
                     {/* Desktop Menu */}
                     <div className={`hidden sm:flex items-center gap-4 lg:gap-8 ${scrolled ? 'text-slate-600' : 'text-white'}`}>
                         <Link href="/">Home</Link>
-                        <Link href="/shop">Shop</Link>
+                        <Link href="/shop">Shop</Link> 
                         <Link href="/orders">Orders</Link>
                         <Link href="/about">About</Link>
 
