@@ -42,7 +42,8 @@ export const metadata = {
     },
     alternates: {
         canonical: 'https://pandcjewellery.com'
-    }
+    },
+    metadataBase: new URL('https://pandcjewellery.com')
 };
 
 export default function RootLayout({ children }) {

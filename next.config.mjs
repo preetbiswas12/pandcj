@@ -3,6 +3,22 @@ const nextConfig = {
     images:{
         unoptimized: true
     },
+    async redirects() {
+        return [
+            // Redirect www to non-www (clean domain)
+            {
+                source: '/:path*',
+                destination: 'https://pandcjewellery.com/:path*',
+                permanent: true,
+                has: [
+                    {
+                        type: 'host',
+                        value: 'www\\.pandcjewellery\\.com'
+                    }
+                ]
+            }
+        ];
+    },
     async headers() {
         return [
             {
