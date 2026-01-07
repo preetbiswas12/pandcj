@@ -6,22 +6,25 @@ import { assets } from '@/assets/assets'
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { SignInButton, UserButton, SignedIn, SignedOut } from '@clerk/nextjs'
+import { UserButton, SignedIn, SignedOut, useAuth } from '@clerk/nextjs'
 
 const Navbar = () => {
 
     const router = useRouter();
+    const { isSignedIn } = useAuth()
 
     const [search, setSearch] = useState('')
     const cartCount = useSelector(state => state.cart.total)
     const wishlistCount = useSelector(state => state.wishlist?.items?.length || 0)
     const [scrolled, setScrolled] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
+    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 20)
         onScroll()
         window.addEventListener('scroll', onScroll)
+        setMounted(true)
         return () => window.removeEventListener('scroll', onScroll)
     }, [])
 
@@ -65,16 +68,14 @@ const Navbar = () => {
                             <button className="absolute -top-1 left-3 text-[8px] text-white bg-rose-500 size-3.5 rounded-full">{wishlistCount}</button>
                         </Link>
                         <SignedIn>
-                            <div className="flex items-center">
-                                <UserButton afterSignOutUrl="/" />
-                            </div>
+                            <UserButton afterSignOutUrl="/" />
                         </SignedIn>
                         <SignedOut>
-                            <SignInButton>
-                                <button className={`${scrolled ? 'px-8 py-2 bg-indigo-500 hover:bg-indigo-600 text-white' : 'px-8 py-2 bg-white text-indigo-600'} transition rounded-full`}>
+                            {mounted && (
+                                <button onClick={() => router.push('/sign-in')} className={`${scrolled ? 'px-6 py-2 bg-indigo-500 hover:bg-indigo-600 text-white' : 'px-6 py-2 bg-white text-indigo-600 hover:bg-gray-100'} transition rounded-full font-medium text-sm`}>
                                     Login
                                 </button>
-                            </SignInButton>
+                            )}
                         </SignedOut>
 
                     </div>
@@ -119,18 +120,16 @@ const Navbar = () => {
                             </div>
                         </form>
 
-                        <div className="mt-6">
+                        <div className="mt-6 pt-4 border-t">
                             <SignedIn>
-                                <div className="flex items-center gap-2">
-                                    <UserButton afterSignOutUrl="/" />
-                                </div>
+                                <UserButton afterSignOutUrl="/" />
                             </SignedIn>
                             <SignedOut>
-                                <div className="mt-4">
-                                    <SignInButton>
-                                        <button className="w-full px-4 py-3 bg-indigo-600 text-white rounded">Login</button>
-                                    </SignInButton>
-                                </div>
+                                {mounted && (
+                                    <button onClick={() => router.push('/sign-in')} className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">
+                                        Login
+                                    </button>
+                                )}
                             </SignedOut>
                         </div>
                     </div>
