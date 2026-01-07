@@ -1,4 +1,3 @@
-'use server'
 import BestSelling from "@/components/BestSelling";
 import Hero from "@/components/Hero";
 import Newsletter from "@/components/Newsletter";
