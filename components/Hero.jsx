@@ -157,7 +157,7 @@ const Hero = ({ initial = null }) => {
                 </div>
                     <div className='flex flex-col md:flex-row xl:flex-col gap-3 sm:gap-5 w-full xl:max-w-sm text-xs sm:text-sm text-black'>
                     <div
-                        className='flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 px-4 sm:px-8 group'
+                        className='flex-1 flex flex-col md:flex-col xl:flex-row xl:items-center xl:justify-between w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 px-4 sm:px-8 group'
                         style={
                             topRight.bgColor
                                 ? { backgroundColor: topRight.bgColor }
@@ -166,14 +166,14 @@ const Hero = ({ initial = null }) => {
                                     : { backgroundColor: '#FED7AA' }
                         }
                     >
-                        <div>
+                        <Image className='w-24 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last' src={topRight.image} alt="" />
+                        <div className='mt-4 md:mt-4 xl:mt-0'>
                             <p className='text-xl sm:text-2xl md:text-3xl font-medium text-black max-w-40'>{topRight.title}</p>
                             <p className='flex items-center gap-1 mt-2 sm:mt-4'><a href={topRight.link} className='flex items-center gap-1 text-black text-xs sm:text-sm'>View more <ArrowRightIcon className='group-hover:ml-2 transition-all' size={16} /></a> </p>
                         </div>
-                        <Image className='w-24 sm:w-35 mt-2 sm:mt-0' src={topRight.image} alt="" />
                     </div>
                     <div
-                        className='flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 px-4 sm:px-8 group'
+                        className='flex-1 flex flex-col md:flex-col xl:flex-row xl:items-center xl:justify-between w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 px-4 sm:px-8 group'
                         style={
                             bottomRight.bgColor
                                 ? { backgroundColor: bottomRight.bgColor }
@@ -182,11 +182,11 @@ const Hero = ({ initial = null }) => {
                                     : { backgroundColor: '#DBEAFE' }
                         }
                     >
-                        <div>
+                        <Image className='w-24 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last' src={bottomRight.image} alt="" />
+                        <div className='mt-4 md:mt-4 xl:mt-0'>
                             <p className='text-xl sm:text-2xl md:text-3xl font-medium text-black max-w-40'>{bottomRight.title}</p>
                             <p className='flex items-center gap-1 mt-2 sm:mt-4'><a href={bottomRight.link} className='flex items-center gap-1 text-black text-xs sm:text-sm'>View more <ArrowRightIcon className='group-hover:ml-2 transition-all' size={16} /></a> </p>
                         </div>
-                        <Image className='w-24 sm:w-35 mt-2 sm:mt-0' src={bottomRight.image} alt="" />
                     </div>
                 </div>
             </div>
