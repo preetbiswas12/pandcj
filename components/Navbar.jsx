@@ -1,8 +1,6 @@
 'use client'
-import { Search, ShoppingCart, Heart, Package, Menu, X, LogOut } from "lucide-react";
+import { Search, ShoppingCart, Heart, Menu, X, LogOut } from "lucide-react";
 import Link from "next/link";
-import Image from 'next/image'
-import { assets } from '@/assets/assets'
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -46,10 +44,9 @@ const Navbar = () => {
     return (
         <nav className={`fixed w-full top-0 left-0 z-50 transition-all ${navBgClass}`}>
             <div className="mx-6">
-                <div className="flex items-center justify-between max-w-7xl mx-auto py-4  transition-all">
+                <div className="flex items-center justify-between max-w-7xl mx-auto py-4 transition-all">
 
                     <Link href="/" className="relative text-4xl font-semibold flex items-center gap-3">
-                        
                         <span className="text-2xl font-semibold"><span className="text-yellow-600">P&C</span><span className="text-slate-500">Jewellery</span><span className="text-yellow-600 text-4xl leading-0">.</span></span>
                     </Link>
 
@@ -67,13 +64,11 @@ const Navbar = () => {
 
                         <Link href="/cart" className={`relative flex items-center gap-2 ${scrolled ? 'text-slate-600' : 'text-white'}`}>
                             <ShoppingCart size={18} />
-                            
-                            <button className="absolute -top-1 left-3 text-[8px] text-white bg-slate-600 size-3.5 rounded-full">{cartCount}</button>
+                            {cartCount > 0 && <button className="absolute -top-1 left-3 text-[8px] text-white bg-slate-600 size-3.5 rounded-full">{cartCount}</button>}
                         </Link>
                         <Link href="/wishlist" className={`relative flex items-center gap-2 ${scrolled ? 'text-slate-600' : 'text-white'}`}>
                             <Heart size={18} />
-                            
-                            <button className="absolute -top-1 left-3 text-[8px] text-white bg-rose-500 size-3.5 rounded-full">{wishlistCount}</button>
+                            {wishlistCount > 0 && <button className="absolute -top-1 left-3 text-[8px] text-white bg-rose-500 size-3.5 rounded-full">{wishlistCount}</button>}
                         </Link>
                         {mounted && (
                             <>
@@ -108,11 +103,10 @@ const Navbar = () => {
             <hr className={`${scrolled ? 'border-gray-300' : 'border-transparent'} mt-0`} />
 
             {/* Mobile Overlay Menu */}
-                    {mobileOpen && (
+            {mobileOpen && (
                 <div className="fixed inset-0 z-50 bg-white sm:hidden text-slate-700">
-                        <div className="flex items-center justify-between p-4 border-b">
+                    <div className="flex items-center justify-between p-4 border-b">
                         <Link href="/" className="flex items-center gap-3">
-                            
                             <span className="text-2xl font-semibold">P&C<span className="text-yellow-600">Jewellery</span></span>
                         </Link>
                         <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="p-2">
@@ -129,7 +123,16 @@ const Navbar = () => {
                             <Link href="/about" onClick={() => setMobileOpen(false)} className="text-base font-medium hover:text-yellow-600 transition">About</Link>
                         </nav>
 
-                        <for{mounted && (
+                        <form onSubmit={handleSearch} className="mt-6">
+                            <div className="flex items-center gap-2 border rounded-full px-3 py-2">
+                                <Search size={16} />
+                                <input className="w-full outline-none" type="text" placeholder="Search products" value={search} onChange={(e) => setSearch(e.target.value)} />
+                                <button type="submit" className="text-sm px-3 py-1 bg-yellow-600 text-white rounded">Search</button>
+                            </div>
+                        </form>
+
+                        <div className="mt-6 pt-4 border-t">
+                            {mounted && (
                                 <>
                                     {isSignedIn && user ? (
                                         <div className="space-y-3">
@@ -152,15 +155,6 @@ const Navbar = () => {
                                     )}
                                 </>
                             )}
-                                <UserButton afterSignOutUrl="/" />
-                            </SignedIn>
-                            <SignedOut>
-                                {mounted && (
-                                    <button onClick={() => router.push('/sign-in')} className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">
-                                        Login
-                                    </button>
-                                )}
-                            </SignedOut>
                         </div>
                     </div>
                 </div>
