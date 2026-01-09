@@ -5,12 +5,12 @@ import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import ReviewForm from "./ReviewForm"
 import EditReviewForm from "./EditReviewForm"
-import { useUser } from "@clerk/nextjs"
+import { useAuth } from "@/app/providers/AuthProvider"
 import toast from "react-hot-toast"
 
 const ProductDescription = ({ product = {} }) => {
 
-    const { user } = useUser();
+    const { user } = useAuth();
     const [selectedTab, setSelectedTab] = useState('Description')
     const [reviews, setReviews] = useState([])
     const [loading, setLoading] = useState(false)

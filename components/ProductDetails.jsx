@@ -10,7 +10,7 @@ import Image from "next/image";
 import Counter from "./Counter";
 import ReviewForm from "./ReviewForm";
 import { useDispatch, useSelector } from "react-redux";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/app/providers/AuthProvider";
 
 const ProductDetails = ({ product = {} }) => {
     const productId = product?.id ?? '';
@@ -20,7 +20,7 @@ const ProductDetails = ({ product = {} }) => {
     const wishlistItems = useSelector(state => state.wishlist?.items || [])
     const inWishlist = wishlistItems.find(i => i.id === productId)
     const dispatch = useDispatch();
-    const { user } = useUser();
+    const { user } = useAuth();
 
     const router = useRouter();
 

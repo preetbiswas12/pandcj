@@ -3,10 +3,10 @@
 import { Star, XIcon } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/app/providers/AuthProvider';
 
 const EditReviewForm = ({ review, onClose, onSuccess }) => {
-    const { user } = useUser();
+    const { user } = useAuth();
     const [rating, setRating] = useState(review?.rating || 0);
     const [reviewText, setReviewText] = useState(review?.review || '');
     const [loading, setLoading] = useState(false);

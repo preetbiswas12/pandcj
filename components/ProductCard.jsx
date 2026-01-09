@@ -5,14 +5,14 @@ import Link from 'next/link'
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { addToWishlist, removeFromWishlist } from '@/lib/features/wishlist/wishlistSlice'
-import { useUser } from '@clerk/nextjs'
+import { useAuth } from '@/app/providers/AuthProvider'
 import ReviewForm from './ReviewForm'
 import { generateProductSlug } from '@/lib/productSlug'
 
 const ProductCard = ({ product }) => {
 
     const dispatch = useDispatch()
-    const { user } = useUser()
+    const { user } = useAuth()
     const wishlistItems = useSelector(state => state.wishlist?.items || [])
     const inWishlist = wishlistItems.find(i => i.id === product.id)
     const [showReviewForm, setShowReviewForm] = useState(false)

@@ -3,10 +3,10 @@
 import { Star, XIcon } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/app/providers/AuthProvider';
 
 const ReviewForm = ({ productId, productName, onClose, onSuccess }) => {
-    const { user } = useUser();
+    const { user } = useAuth();
     const [rating, setRating] = useState(0);
     const [review, setReview] = useState('');
     const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ const ReviewForm = ({ productId, productName, onClose, onSuccess }) => {
             const payload = {
                 userId: user?.id,
                 userName: user?.fullName || 'Anonymous',
-                userImage: user?.imageUrl || null,
+                userImage: null,
                 productId,
                 rating: Number(rating),
                 review: review.trim(),
