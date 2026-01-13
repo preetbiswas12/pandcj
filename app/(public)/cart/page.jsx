@@ -140,7 +140,7 @@ export default function Cart() {
                                 <a href="#wishlist" className="flex-1 py-2 px-3 text-slate-600 text-sm font-medium rounded border border-slate-300 text-center">Wishlist</a>
                             </div>
                             <div>
-                                <OrderSummary totalPrice={totalPrice} items={cartArray} />
+                                <OrderSummary totalPrice={totalPrice} items={cartItems} />
                             </div>
                         </div>
 

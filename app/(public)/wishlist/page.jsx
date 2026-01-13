@@ -18,8 +18,16 @@ export default function WishlistPage() {
             toast.error('Cannot add — product is out of stock')
             return
         }
-        dispatch(addToCart({ productId: item.id }))
+        dispatch(addToCart({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.images?.[0],
+            product: item,
+            quantity: 1
+        }))
         dispatch(removeFromWishlist(item.id))
+        toast.success('Moved to cart!')
     }
 
     const removeItem = (id) => {
