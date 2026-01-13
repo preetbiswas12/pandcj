@@ -60,6 +60,7 @@ export async function POST(req) {
         return new Response(
           JSON.stringify({
             ok: true,
+            token: token,
             user: {
               id: user.id || user._id,
               email: user.email,
@@ -93,6 +94,7 @@ export async function POST(req) {
       return new Response(
         JSON.stringify({
           ok: true,
+          token: token,
           user: {
             id: user.id || user._id,
             email: user.email,
