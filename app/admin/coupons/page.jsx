@@ -56,6 +56,9 @@ export default function AdminCoupons() {
     }
 
     const deleteCoupon = async (code) => {
+        if (!code) {
+            throw new Error('Coupon code is missing')
+        }
         try {
             const res = await fetch(`/api/admin/coupons/${code}`, { method: 'DELETE', credentials: 'include' })
             if (!res.ok) {
@@ -63,10 +66,9 @@ export default function AdminCoupons() {
                 throw new Error(error.error || 'Delete failed')
             }
             setCoupons(prev => prev.filter(c => c.code !== code))
-            toast.success(`Coupon ${code} deleted`)
             return true
         } catch (e) { 
-            console.error(e)
+            console.error('Delete error:', e)
             throw new Error(e.message || 'Could not delete coupon')
         }
     }
@@ -166,7 +168,13 @@ export default function AdminCoupons() {
                                     <td className="py-3 px-4 text-slate-800">{coupon.forMember ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.applyToShipping ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">
-                                        <DeleteIcon onClick={() => toast.promise(deleteCoupon(coupon.code), { loading: "Deleting coupon...", success: "Coupon deleted", error: (err) => err.message })} className="w-5 h-5 text-red-500 hover:text-red-800 cursor-pointer transition" />
+                                        <DeleteIcon onClick={() => {
+                                            if (!coupon.code) {
+                                                toast.error('Invalid coupon code')
+                                                return
+                                            }
+                                            toast.promise(deleteCoupon(coupon.code), { loading: "Deleting coupon...", success: "Coupon deleted", error: (err) => err.message })
+                                        }} className="w-5 h-5 text-red-500 hover:text-red-800 cursor-pointer transition" />
                                     </td>
                                 </tr>
                             ))}
