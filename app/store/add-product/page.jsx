@@ -129,10 +129,7 @@ export default function StoreAddProduct() {
                         r.readAsDataURL(file)
                     })
                     const base64 = dataUrl.split(',')[1]
-                    const controller = new AbortController()
-                    const timeout = setTimeout(() => controller.abort(), 15000) // 15s timeout for Cloudinary upload
-                    const res = await fetch('/api/admin/stores/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: base64, filename: file.name }), signal: controller.signal })
-                    clearTimeout(timeout)
+                    const res = await fetch('/api/admin/stores/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: base64, filename: file.name }) })
                     const body = await res.json()
                     if (!res.ok) {
                         console.error('[AddProduct] Upload failed:', body?.error?.message)
@@ -142,11 +139,7 @@ export default function StoreAddProduct() {
                     if (body?.url) uploadedUrls.push(body.url)
                 } catch (uploadErr) {
                     console.error('[AddProduct] Upload error:', uploadErr.message)
-                    if (uploadErr.name === 'AbortError') {
-                        toast.error(`Image upload timeout for ${file.name} - please try again`)
-                    } else {
-                        toast.error(`Failed to upload ${file.name}: ${uploadErr.message}`)
-                    }
+                    toast.error(`Failed to upload ${file.name}: ${uploadErr.message}`)
                     throw uploadErr
                 }
             }
@@ -170,10 +163,7 @@ export default function StoreAddProduct() {
 
             console.log('[AddProduct] Sending payload:', payload)
 
-            const controller2 = new AbortController()
-            const timeout2 = setTimeout(() => controller2.abort(), 45000) // 45s timeout for product creation
-            const res = await fetch('/api/admin/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller2.signal })
-            clearTimeout(timeout2)
+            const res = await fetch('/api/admin/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
             
             console.log('[AddProduct] Response status:', res.status)
             
@@ -192,11 +182,7 @@ export default function StoreAddProduct() {
         } catch (err) {
             console.error('[AddProduct] Error:', err)
             toast.dismiss(loadingToast)
-            if (err.name === 'AbortError') {
-                toast.error('Request timeout - please try again')
-            } else {
-                toast.error(err.message || 'Could not add product')
-            }
+            toast.error(err.message || 'Could not add product')
         } finally { 
             setLoading(false) 
         }
