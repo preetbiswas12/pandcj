@@ -15,33 +15,19 @@ export default function Cart() {
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$';
     
-    const { cartItems } = useSelector(state => state.cart);
-    const products = useSelector(state => state.product.list || []);
-
+    const { items: cartItems } = useSelector(state => state.cart);
     const dispatch = useDispatch();
 
-    const [cartArray, setCartArray] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const wishlistItems = useSelector(state => state.wishlist?.items || [])
 
-    const createCartArray = () => {
-        setTotalPrice(0);
-        const cartArray = [];
-        for (const [key, value] of Object.entries(cartItems)) {
-            const product = products.find(product => product.id === key);
-            if (product) {
-                cartArray.push({
-                    ...product,
-                    quantity: value,
-                });
-                setTotalPrice(prev => prev + product.price * value);
-            }
-        }
-        setCartArray(cartArray);
+    const calculateTotalPrice = () => {
+        const total = cartItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
+        setTotalPrice(total)
     }
 
-    const handleDeleteItemFromCart = (productId) => {
-        dispatch(deleteItemFromCart({ productId }))
+    const handleDeleteItemFromCart = (id) => {
+        dispatch(deleteItemFromCart({ id }))
     }
 
     const moveWishlistToCart = (product) => {
@@ -50,17 +36,22 @@ export default function Cart() {
             toast.error('Cannot add — product is out of stock')
             return
         }
-        dispatch(addToCart({ productId: product.id }))
+        dispatch(addToCart({ 
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.images?.[0],
+            product: product,
+            quantity: 1
+        }))
         dispatch(removeFromWishlist(product.id))
     }
 
     useEffect(() => {
-        if (products.length > 0) {
-            createCartArray();
-        }
-    }, [cartItems, products]);
+        calculateTotalPrice()
+    }, [cartItems]);
 
-    return cartArray.length > 0 ? (
+    return cartItems.length > 0 ? (
         <div className="min-h-screen mx-3 sm:mx-6 text-slate-800">
 
             <div className="max-w-7xl mx-auto">
@@ -84,15 +75,15 @@ export default function Cart() {
                                 </thead>
                                 <tbody>
                                     {
-                                        cartArray.map((item, index) => (
+                                        cartItems.map((item, index) => (
                                             <tr key={index} className="border-b hover:bg-slate-50 transition">
                                                 <td className="flex gap-3 py-3">
                                                     <div className="flex gap-3 items-center justify-center bg-slate-100 size-16 sm:size-18 rounded-md flex-shrink-0">
-                                                        <Image src={item.images[0]} className="h-12 sm:h-14 w-auto" alt="" width={45} height={45} />
+                                                        <Image src={item.image} className="h-12 sm:h-14 w-auto" alt="" width={45} height={45} />
                                                     </div>
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-medium truncate">{item.name}</p>
-                                                        <p className="text-xs text-slate-500">{item.category}</p>
+                                                        <p className="text-xs text-slate-500">{item.product?.category || 'N/A'}</p>
                                                         <p className="text-sm font-semibold mt-1">{currency}{item.price}</p>
                                                     </div>
                                                 </td>
@@ -115,15 +106,15 @@ export default function Cart() {
                         {/* Mobile Cards */}
                         <div className="md:hidden space-y-3">
                             {
-                                cartArray.map((item, index) => (
+                                cartItems.map((item, index) => (
                                     <div key={index} className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200 hover:shadow-md transition">
                                         <div className="flex gap-3 mb-3">
                                             <div className="flex gap-3 items-center justify-center bg-slate-100 size-16 rounded-md flex-shrink-0">
-                                                <Image src={item.images[0]} className="h-12 w-auto" alt="" width={45} height={45} />
+                                                <Image src={item.image} className="h-12 w-auto" alt="" width={45} height={45} />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium truncate">{item.name}</p>
-                                                <p className="text-xs text-slate-500">{item.category}</p>
+                                                <p className="text-xs text-slate-500">{item.product?.category || 'N/A'}</p>
                                                 <p className="text-sm font-semibold mt-1">{currency}{item.price}</p>
                                             </div>
                                             <button onClick={() => handleDeleteItemFromCart(item.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-full active:scale-95 transition-all">

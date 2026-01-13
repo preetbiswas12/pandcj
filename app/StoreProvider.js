@@ -46,7 +46,7 @@ export default function StoreProvider({ children }) {
           // debounce writes to localStorage
           if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
           saveTimerRef.current = setTimeout(() => {
-            saveCartToStorage({ total: state.cart.total, cartItems: state.cart.cartItems })
+            saveCartToStorage({ total: state.cart.total, items: state.cart.items })
             saveTimerRef.current = null
           }, 1000)
         }
@@ -65,7 +65,7 @@ export default function StoreProvider({ children }) {
           saveTimerRef.current = null
         }
         const state = storeRef.current.getState()
-        if (state && state.cart) saveCartToStorage({ total: state.cart.total, cartItems: state.cart.cartItems })
+        if (state && state.cart) saveCartToStorage({ total: state.cart.total, items: state.cart.items })
       } catch (e) {
         /* ignore */
       }

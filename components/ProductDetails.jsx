@@ -16,9 +16,10 @@ const ProductDetails = ({ product = {} }) => {
     const productId = product?.id ?? '';
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$';
 
-    const cart = useSelector(state => state.cart.cartItems || {});
+    const cart = useSelector(state => state.cart.items || []);
     const wishlistItems = useSelector(state => state.wishlist?.items || [])
     const inWishlist = wishlistItems.find(i => i.id === productId)
+    const isInCart = cart.some(item => item.id === productId)
     const dispatch = useDispatch();
     const { user } = useAuth();
 
@@ -67,7 +68,15 @@ const ProductDetails = ({ product = {} }) => {
     const addToCartHandler = () => {
         if (!productId) return;
         if (product.inStock === false) return toast.error('Product is out of stock')
-        dispatch(addToCart({ productId }));
+        dispatch(addToCart({
+            id: productId,
+            name: product.name,
+            price: product.price,
+            image: product.images?.[0],
+            product: product,
+            quantity: 1
+        }));
+        toast.success('Added to cart!');
     }
 
     const toggleWishlist = () => {
@@ -142,15 +151,15 @@ const ProductDetails = ({ product = {} }) => {
                     <p>Save {product.mrp ? ((product.mrp - product.price) / product.mrp * 100).toFixed(0) : 0}% right now</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4 mt-6 sm:mt-8">
-                    {cart[productId] && (
+                    {isInCart && (
                         <div className="flex flex-col gap-2">
                             <p className="text-base sm:text-lg text-slate-800 font-semibold">Quantity</p>
                             <Counter productId={productId} />
                         </div>
                     )}
                     <div className="flex gap-2 sm:gap-3 flex-col sm:flex-row flex-1 sm:flex-initial">
-                        <button onClick={() => !cart[productId] ? addToCartHandler() : router.push('/cart')} className="w-full sm:w-auto bg-slate-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded hover:bg-slate-900 active:scale-95 transition">
-                            {!cart[productId] ? 'Add to Cart' : 'View Cart'}
+                        <button onClick={() => !isInCart ? addToCartHandler() : router.push('/cart')} className="w-full sm:w-auto bg-slate-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded hover:bg-slate-900 active:scale-95 transition">
+                            {!isInCart ? 'Add to Cart' : 'View Cart'}
                         </button>
                         <button title="Add to wishlist" onClick={toggleWishlist} className={`w-full sm:w-auto flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded text-xs sm:text-sm font-medium ${inWishlist ? 'bg-rose-100 text-rose-600' : 'bg-white border'} border-slate-200`}>
                             <Heart size={16} className="shrink-0" />

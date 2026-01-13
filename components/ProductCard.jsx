@@ -168,14 +168,15 @@ const ProductCard = ({ product }) => {
                     <MessageCircle size={14} className='sm:size-[16px]' />
                 </button>
 
-                {/* Add to Cart Button - Bottom Right (Hidden on mobile, visible on hover desktop) */}
+                {/* Add to Cart Button - Bottom Right (always visible) */}
                 <button
                     onClick={handleAddToCart}
                     disabled={product.inStock === false || product.stock === 'out_of_stock'}
-                    className='absolute right-1.5 sm:right-2 bottom-1.5 sm:bottom-2 p-1.5 sm:p-2 rounded-full bg-slate-800 text-white shadow-lg opacity-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all active:scale-90 hover:bg-slate-900 hover:shadow-xl disabled:bg-slate-300 disabled:cursor-not-allowed'
+                    className='absolute right-2 sm:right-3 bottom-2 sm:bottom-3 p-2 sm:p-2.5 rounded-full bg-slate-800 text-white shadow-lg transition-all duration-200 active:scale-90 hover:bg-slate-900 hover:shadow-xl disabled:bg-slate-300 disabled:cursor-not-allowed'
                     aria-label="Add to cart"
+                    title="Add to cart"
                 >
-                    <ShoppingCartIcon size={14} className='sm:size-[16px]' />
+                    <ShoppingCartIcon size={16} className='sm:size-[18px]' />
                 </button>
             </div>
 
