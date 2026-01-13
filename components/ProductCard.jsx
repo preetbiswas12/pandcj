@@ -67,6 +67,22 @@ const ProductCard = ({ product }) => {
         }
     }
 
+    const handleAddToCart = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        
+        dispatch(addToCart({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.images?.[0],
+            product: product,
+            quantity: 1
+        }))
+        
+        toast.success('Added to cart!')
+    }
+
     const handleBuyNow = (e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -94,7 +110,7 @@ const ProductCard = ({ product }) => {
         <>
             <div className='group max-xl:mx-auto relative'>
                 <Link href={`/product/${generateProductSlug(product.name, product.id)}`} className='block rounded-md hover:shadow-md transition'>
-                    <div className='bg-[#F5F5F5] h-40 sm:h-56 md:h-68 rounded-lg flex items-center justify-center overflow-hidden'>
+                    <div className='bg-[#F5F5F5] h-40 sm:h-56 md:h-68 rounded-lg flex items-center justify-center overflow-hidden relative'>
                         {product?.images && product.images.length > 0 ? (
                             <Image width={500} height={500} className='object-cover w-full h-full' src={product.images[0]} alt={product.name || ''} />
                         ) : (
@@ -137,7 +153,7 @@ const ProductCard = ({ product }) => {
                 {/* Wishlist Button - always visible */}
                 <button 
                     onClick={toggleWishlist} 
-                    className={`absolute right-1.5 sm:right-2 top-1.5 sm:top-2 p-1.5 sm:p-2 rounded-full transition ${inWishlist ? 'bg-rose-100 text-rose-600' : 'bg-white/90 text-slate-600'} shadow-lg`} 
+                    className={`absolute right-1.5 sm:right-2 top-1.5 sm:top-2 p-1.5 sm:p-2 rounded-full transition active:scale-90 ${inWishlist ? 'bg-rose-100 text-rose-600' : 'bg-white/90 text-slate-600'} shadow-lg hover:shadow-xl`} 
                     aria-label="Toggle wishlist"
                 >
                     <Heart size={14} className='sm:size-[16px]' />
@@ -146,10 +162,20 @@ const ProductCard = ({ product }) => {
                 {/* Review Button - visible on hover (desktop) and always on mobile */}
                 <button
                     onClick={handleReviewClick}
-                    className='absolute left-1.5 sm:left-2 top-1.5 sm:top-2 p-1.5 sm:p-2 rounded-full bg-white/90 text-slate-600 shadow-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200'
+                    className='absolute left-1.5 sm:left-2 top-1.5 sm:top-2 p-1.5 sm:p-2 rounded-full bg-white/90 text-slate-600 shadow-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 hover:shadow-xl active:scale-90'
                     aria-label="Write review"
                 >
                     <MessageCircle size={14} className='sm:size-[16px]' />
+                </button>
+
+                {/* Add to Cart Button - Bottom Right (Hidden on mobile, visible on hover desktop) */}
+                <button
+                    onClick={handleAddToCart}
+                    disabled={product.inStock === false || product.stock === 'out_of_stock'}
+                    className='absolute right-1.5 sm:right-2 bottom-1.5 sm:bottom-2 p-1.5 sm:p-2 rounded-full bg-slate-800 text-white shadow-lg opacity-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all active:scale-90 hover:bg-slate-900 hover:shadow-xl disabled:bg-slate-300 disabled:cursor-not-allowed'
+                    aria-label="Add to cart"
+                >
+                    <ShoppingCartIcon size={14} className='sm:size-[16px]' />
                 </button>
             </div>
 

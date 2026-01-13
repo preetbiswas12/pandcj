@@ -106,8 +106,15 @@ export async function POST(req) {
           }
         } else {
           const bodyJson = await res.json()
-          // include the dataUrl for clients that want an immediate preview; primary preview should use `url`
-          return new Response(JSON.stringify({ url: bodyJson.secure_url, provider: 'cloudinary', raw: bodyJson, dataUrl: `data:${mimeType};base64,${base64Data}` }), { status: 201 })
+          // Only return essential fields to avoid response size issues
+          const responseBody = JSON.stringify({ 
+            url: bodyJson.secure_url,
+            provider: 'cloudinary'
+          })
+          return new Response(responseBody, { 
+            status: 201,
+            headers: { 'Content-Type': 'application/json' }
+          })
         }
       } catch (cloudErr) {
         console.error('Cloudinary upload error', cloudErr.message || cloudErr)
@@ -133,7 +140,10 @@ export async function POST(req) {
       const filePath = path.join(uploadsDir, safeName)
       fs.writeFileSync(filePath, buffer)
       const publicUrl = `/uploads/${safeName}`
-      return new Response(JSON.stringify({ url: publicUrl, dataUrl: `data:${mimeType};base64,${base64Data}` }), { status: 201 })
+      return new Response(JSON.stringify({ url: publicUrl }), { 
+        status: 201,
+        headers: { 'Content-Type': 'application/json' }
+      })
     } catch (err) {
       // If filesystem is read-only, fall back to tmp dir
       if (err && err.code === 'EROFS') {
@@ -142,9 +152,11 @@ export async function POST(req) {
           if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
           const tmpPath = path.join(tmpDir, safeName)
           fs.writeFileSync(tmpPath, buffer)
-          // Return the original data URL for client-side preview / re-upload
-          const dataUrl = `data:${mimeType};base64,${base64Data}`
-          return new Response(JSON.stringify({ url: null, tempPath: tmpPath, dataUrl }), { status: 201 })
+          // Return a minimal response
+          return new Response(JSON.stringify({ url: tmpPath }), { 
+            status: 201,
+            headers: { 'Content-Type': 'application/json' }
+          })
         } catch (tmpErr) {
           console.error('Failed to write to tmp dir', tmpErr)
           return new Response(JSON.stringify({ error: 'Upload failed (tmp)' }), { status: 500 })

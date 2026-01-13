@@ -129,14 +129,33 @@ export default function StoreAddProduct() {
                         r.readAsDataURL(file)
                     })
                     const base64 = dataUrl.split(',')[1]
-                    const res = await fetch('/api/admin/stores/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: base64, filename: file.name }) })
-                    const body = await res.json()
+                    const res = await fetch('/api/admin/stores/upload', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ data: base64, filename: file.name }) 
+                    })
+                    
+                    // Check if response is ok first before parsing
                     if (!res.ok) {
-                        console.error('[AddProduct] Upload failed:', body?.error?.message)
-                        throw new Error(`Upload failed: ${body?.error?.message || 'Unknown error'}`)
+                        let errorMsg = 'Unknown error'
+                        try {
+                            const body = await res.json()
+                            errorMsg = body?.error?.message || body?.error || 'Upload failed'
+                        } catch {
+                            errorMsg = `HTTP ${res.status}`
+                        }
+                        console.error('[AddProduct] Upload failed:', errorMsg)
+                        throw new Error(errorMsg)
                     }
-                    console.log('[AddProduct] Image uploaded successfully:', body?.url)
-                    if (body?.url) uploadedUrls.push(body.url)
+                    
+                    // Parse successful response
+                    const body = await res.json()
+                    if (!body?.url) {
+                        throw new Error('No URL returned from server')
+                    }
+                    
+                    console.log('[AddProduct] Image uploaded successfully:', body.url)
+                    uploadedUrls.push(body.url)
                 } catch (uploadErr) {
                     console.error('[AddProduct] Upload error:', uploadErr.message)
                     toast.error(`Failed to upload ${file.name}: ${uploadErr.message}`)
