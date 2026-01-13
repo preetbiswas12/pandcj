@@ -1,9 +1,8 @@
 import mongodb from '@/lib/mongodb'
 
-export async function GET(req) {
+export async function GET(req, { params }) {
   try {
-    const url = new URL(req.url)
-    const code = url.searchParams.get('code')
+    const { code } = await params
 
     if (!code) {
       return new Response(JSON.stringify({ error: 'Coupon code is required' }), { status: 400 })
@@ -16,7 +15,7 @@ export async function GET(req) {
     }
 
     // Check if expired
-    if (new Date(coupon.expiresAt) < new Date()) {
+    if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
       return new Response(JSON.stringify({ valid: false, error: 'Coupon expired' }), { status: 400 })
     }
 

@@ -4,7 +4,7 @@ import mongodb from '@/lib/mongodb'
 export async function POST(req) {
   try {
     const body = await req.json()
-    const { items, total, address, userId } = body || {}
+    const { items, total, subtotal, shippingCharge, coupon, address, userId } = body || {}
     if (!items || !Array.isArray(items) || items.length === 0) return new Response(JSON.stringify({ error: 'No items' }), { status: 400 })
 
     // ensure user exists minimally
@@ -15,6 +15,9 @@ export async function POST(req) {
     const orderId = randomUUID()
     const created = await mongodb.order.create({
       id: orderId,
+      subtotal: Number(subtotal) || items.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 0)), 0),
+      shippingCharge: Number(shippingCharge) || 0,
+      coupon: coupon || null,
       total: Number(total) || items.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 0)), 0),
       status: 'pending',
       userId: uid,

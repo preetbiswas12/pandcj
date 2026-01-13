@@ -55,11 +55,18 @@ export default function AdminCoupons() {
 
     const deleteCoupon = async (code) => {
         try {
-            const res = await fetch(`/api/admin/coupons/${code}`, { method: 'DELETE' })
-            if (!res.ok) throw new Error('Delete failed')
+            const res = await fetch(`/api/admin/coupons/${code}`, { method: 'DELETE', credentials: 'include' })
+            if (!res.ok) {
+                const error = await res.json()
+                throw new Error(error.error || 'Delete failed')
+            }
             setCoupons(prev => prev.filter(c => c.code !== code))
+            toast.success(`Coupon ${code} deleted`)
             return true
-        } catch (e) { console.error(e); toast.error('Could not delete coupon'); return false }
+        } catch (e) { 
+            console.error(e)
+            throw new Error(e.message || 'Could not delete coupon')
+        }
     }
 
     useEffect(() => {
@@ -144,7 +151,7 @@ export default function AdminCoupons() {
                                     <td className="py-3 px-4 text-slate-800">{coupon.forNewUser ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.forMember ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">
-                                        <DeleteIcon onClick={() => toast.promise(deleteCoupon(coupon.code), { loading: "Deleting coupon..." })} className="w-5 h-5 text-red-500 hover:text-red-800 cursor-pointer" />
+                                        <DeleteIcon onClick={() => toast.promise(deleteCoupon(coupon.code), { loading: "Deleting coupon...", success: "Coupon deleted", error: (err) => err.message })} className="w-5 h-5 text-red-500 hover:text-red-800 cursor-pointer transition" />
                                     </td>
                                 </tr>
                             ))}

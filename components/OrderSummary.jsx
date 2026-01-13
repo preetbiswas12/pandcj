@@ -37,6 +37,34 @@ const OrderSummary = ({ totalPrice, items }) => {
     const handleCouponCode = async (event) => {
         event.preventDefault();
         
+        if (!couponCodeInput.trim()) {
+            toast.error('Please enter a coupon code');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/coupon/${couponCodeInput.trim()}`, {
+                method: 'GET',
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || 'Invalid coupon code');
+            }
+
+            const couponData = await res.json();
+            
+            if (!couponData.valid) {
+                throw new Error(couponData.error || 'Invalid or expired coupon');
+            }
+
+            setCoupon(couponData);
+            setCouponCodeInput('');
+            toast.success(`Coupon "${couponData.code}" applied successfully!`);
+        } catch (error) {
+            toast.error(error.message || 'Failed to apply coupon');
+            setCouponCodeInput('');
+        }
     }
 
     const loadRazorpayScript = () => new Promise((resolve, reject) => {
@@ -86,8 +114,14 @@ const OrderSummary = ({ totalPrice, items }) => {
                         storeId: product?.storeId || (it.storeId || 'default-store')
                     }
                 }),
-                total: totalPrice + shippingCharge,
+                subtotal: totalPrice,
                 shippingCharge: shippingCharge,
+                coupon: coupon ? {
+                    code: coupon.code,
+                    discount: coupon.discount,
+                    discountAmount: (coupon.discount / 100 * (totalPrice + shippingCharge))
+                } : null,
+                total: coupon ? ((totalPrice + shippingCharge) - (coupon.discount / 100 * (totalPrice + shippingCharge))) : (totalPrice + shippingCharge),
                 address: selectedAddress || {},
                 paymentMethod: 'RAZORPAY',
                 userId: user?.id || null
@@ -271,13 +305,16 @@ const OrderSummary = ({ totalPrice, items }) => {
         const fetchShippingCharge = async () => {
             setLoadingShipping(true)
             try {
+                // Get the item weight from environment variable or default to 0.25 kg
+                const itemWeight = parseFloat(process.env.NEXT_PUBLIC_SINGLE_ITEM_WEIGHT || '0.25')
+                
                 const requestBody = {
                     items: (items || []).map(it => {
                         const product = it.product || it
                         return {
                             productId: product?.id,
                             quantity: Number(it.quantity || 1),
-                            weight: 0.5
+                            weight: itemWeight
                         }
                     }),
                     deliveryAddress: selectedAddress,
@@ -294,13 +331,13 @@ const OrderSummary = ({ totalPrice, items }) => {
                 
                 const data = await res.json()
                 console.log('[OrderSummary] 📨 API Response Status:', res.status)
-                console.log('[OrderSummary] 📨 API Response Full:', JSON.stringify(data))
+                console.log('[OrderSummary] 📨 Shipping charge:', data.shippingCharge, 'Estimated days:', data.estimatedDays)
                 
                 if (res.ok && data.shippingCharge !== undefined && data.shippingCharge !== null) {
                     const charge = Number(data.shippingCharge)
                     setShippingCharge(charge)
                     setEstimatedDays(data.estimatedDays || null)
-                    console.log('[OrderSummary] ✅ Shipping charge set to: ₹' + charge)
+                    console.log('[OrderSummary] ✅ Shipping charge updated to: ₹' + charge, 'Days:', data.estimatedDays)
                 } else {
                     // API returned an error or invalid data
                     let errorMsg = data.error || data.message || 'Could not calculate shipping for this location'

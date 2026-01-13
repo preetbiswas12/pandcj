@@ -160,10 +160,10 @@ export async function POST(req) {
       cod_amount: 0, // Prepaid only, no COD
       
       // Package dimensions
-      weight: items.reduce((sum, item) => sum + (Number(item.weight || 0.5) * Number(item.quantity || 1)), 0),
-      length: 35,
-      breadth: 30,
-      height: 3
+      weight: items.reduce((sum, item) => sum + (Number(item.weight || 0.25) * Number(item.quantity || 1)), 0),
+      length: 15,
+      breadth: 15,
+      height: 5
     }
 
     console.log('[Shiprocket] 🚀 Creating order:', { orderId, customerName: shiprocketOrder.billing_customer_name, itemCount: shiprocketOrder.order_items.length })

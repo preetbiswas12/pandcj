@@ -179,7 +179,7 @@ export default function AdminStoreEdit() {
           <label className="text-sm">
             <div className="text-xs text-slate-500 mb-1">Logo</div>
             <div className="flex items-center gap-3">
-              <label className="inline-flex items-center gap-2 cursor-pointer bg-linear-to-r from-emerald-500 to-yellow-600 text-white px-4 py-2 rounded-lg shadow hover:from-emerald-600 hover:to-yellow-700 transition">
+              <label className="inline-flex items-center gap-2 cursor-pointer bg-gradient-to-r from-emerald-500 to-yellow-600 text-white px-4 py-2 rounded-lg shadow hover:shadow-md hover:from-emerald-600 hover:to-yellow-700 transition">
                 <input className="hidden" type="file" accept="image/*" onChange={handleFilePick} />
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
                   <path fillRule="evenodd" d="M4 3a1 1 0 011-1h10a1 1 0 011 1v6a1 1 0 11-2 0V5H6v10h4a1 1 0 110 2H5a1 1 0 01-1-1V3z" clipRule="evenodd" />
@@ -195,7 +195,7 @@ export default function AdminStoreEdit() {
           </label>
 
           <div className="flex gap-3 pt-4">
-            <button type="submit" className="px-6 py-3 bg-linear-to-r from-emerald-500 to-yellow-600 text-white rounded-lg shadow-lg hover:from-emerald-600 hover:to-yellow-700 font-semibold transition">Save</button>
+            <button type="submit" className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-yellow-600 text-white rounded-lg shadow-lg hover:shadow-lg hover:from-emerald-600 hover:to-yellow-700 font-semibold transition">Save</button>
             <button type="button" onClick={handleCancel} className="px-5 py-3 bg-white border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 'use client'
 import { assets } from "@/assets/assets"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "react-hot-toast"
 
 export default function StoreAddProduct() {
@@ -9,6 +9,7 @@ export default function StoreAddProduct() {
     const categories = ['Earrings', 'Necklace', 'Heavy Necklace', 'Fashionable Earrings', 'Others']
 
     const [images, setImages] = useState({ 1: { file: null, preview: null }, 2: { file: null, preview: null }, 3: { file: null, preview: null }, 4: { file: null, preview: null } })
+    const [storeId, setStoreId] = useState(null)
     const [productInfo, setProductInfo] = useState({
         name: "",
         description: "",
@@ -19,6 +20,26 @@ export default function StoreAddProduct() {
     })
     const [loading, setLoading] = useState(false)
 
+    // Fetch user's store on component mount
+    useEffect(() => {
+        const fetchStore = async () => {
+            try {
+                const res = await fetch('/api/store', { credentials: 'include' })
+                if (res.ok) {
+                    const store = await res.json()
+                    setStoreId(store?.id || 'default-store')
+                } else {
+                    // Fallback to default store if no user store found
+                    setStoreId('default-store')
+                }
+            } catch (err) {
+                console.error('Failed to fetch store:', err)
+                // Fallback to default store
+                setStoreId('default-store')
+            }
+        }
+        fetchStore()
+    }, [])
 
     const onChangeHandler = (e) => {
         setProductInfo({ ...productInfo, [e.target.name]: e.target.value })
@@ -28,6 +49,12 @@ export default function StoreAddProduct() {
         e.preventDefault()
         try {
             setLoading(true)
+
+            if (!storeId) {
+                toast.error('Store information not available')
+                setLoading(false)
+                return
+            }
 
             // upload images that are selected
             const uploadedUrls = []
@@ -63,27 +90,33 @@ export default function StoreAddProduct() {
             const payload = {
                 name: productInfo.name,
                 description: productInfo.description,
-                mrp: productInfo.mrp,
-                price: productInfo.price,
+                mrp: Number(productInfo.mrp),
+                price: Number(productInfo.price),
                 images: uploadedUrls,
                 category: productInfo.category,
                 stock: productInfo.stock,
-                storeId: 'default-store'
+                storeId: storeId
             }
 
             const controller2 = new AbortController()
             const timeout2 = setTimeout(() => controller2.abort(), 4000) // 4s timeout
             const res = await fetch('/api/admin/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller2.signal })
             clearTimeout(timeout2)
-            if (!res.ok) throw new Error('Failed to create product')
+            if (!res.ok) {
+                const errorData = await res.json()
+                throw new Error(errorData?.error || 'Failed to create product')
+            }
             const created = await res.json()
-            toast.success('Product added')
+            toast.success('Product added successfully!')
             // reset form
             setProductInfo({ name: '', description: '', mrp: 0, price: 0, category: '', stock: 'in_stock' })
             setImages({ 1: { file: null, preview: null }, 2: { file: null, preview: null }, 3: { file: null, preview: null }, 4: { file: null, preview: null } })
         } catch (err) {
-            if (err.name !== 'AbortError') console.error(err)
-            toast.error('Could not add product')
+            if (err.name !== 'AbortError') {
+                console.error('Product creation error:', err)
+                throw new Error(err.message || 'Could not add product')
+            }
+            throw new Error('Request timeout - please try again')
         } finally { setLoading(false) }
         
     }

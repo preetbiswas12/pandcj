@@ -9,8 +9,8 @@ export default function NotFound() {
           <div className="text-6xl md:text-8xl font-bold text-slate-800">404</div>
         </div>
 
-        <div className="mx-auto mb-6 h-48 w-48 md:h-60 md:w-60 overflow-hidden rounded">
-          <img src="/images/404.png" alt="not found" className="object-cover h-full w-full" />
+        <div className="mx-auto mb-6 h-48 w-48 md:h-60 md:w-60 rounded">
+          <img src="/images/404.png" alt="not found" className="object-contain h-full w-full" />
         </div>
 
         <h1 className="text-2xl md:text-3xl font-semibold text-slate-800 mb-3">Oops! Page not found</h1>

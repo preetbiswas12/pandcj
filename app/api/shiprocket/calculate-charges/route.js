@@ -96,7 +96,7 @@ export async function POST(req) {
     const pinCode = String(deliveryAddress.zip)
     const SHIPROCKET_BASE_URL = process.env.SHIPROCKET_BASE_URL || 'https://apiv2.shiprocket.in'
     const PICKUP_PIN = process.env.SHIPROCKET_PICKUP_PIN || '110001'
-    const SINGLE_ITEM_WEIGHT = Number(process.env.SINGLE_ITEM_WEIGHT || 0.5) // Weight of 1 item for shipping calculation
+    const SINGLE_ITEM_WEIGHT = Number(process.env.SINGLE_ITEM_WEIGHT || 0.25) // Weight of 1 item for shipping calculation
 
     console.log('[Shiprocket] 📍 From:', PICKUP_PIN, '→ To:', pinCode, '| Weight: ' + SINGLE_ITEM_WEIGHT + ' kg (single item)')
 

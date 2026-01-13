@@ -7,18 +7,29 @@ export async function POST(req) {
     const { name, description, mrp, price, images, category, stock, storeId } = body
 
     if (!name || !description || !images || !Array.isArray(images) || images.length === 0) {
+      console.error('POST /api/admin/products: Missing required fields', { name: !!name, description: !!description, images: Array.isArray(images) ? images.length : 'not-array' })
       return new Response(JSON.stringify({ error: 'name, description, and at least one image are required' }), { status: 400 })
     }
 
     if (!storeId) {
+      console.error('POST /api/admin/products: Missing storeId')
       return new Response(JSON.stringify({ error: 'storeId is required' }), { status: 400 })
+    }
+
+    // Validate numeric values
+    const mrrpNum = Number(mrp)
+    const priceNum = Number(price)
+    
+    if (isNaN(mrrpNum) || isNaN(priceNum)) {
+      console.error('POST /api/admin/products: Invalid price values', { mrp, price })
+      return new Response(JSON.stringify({ error: 'MRP and price must be valid numbers' }), { status: 400 })
     }
 
     const newProduct = await mongodb.product.create({
       name,
       description,
-      mrp: Number(mrp) || 0,
-      price: Number(price) || 0,
+      mrp: mrrpNum,
+      price: priceNum,
       images,
       category: category || 'Others',
       stock: stock || 'in_stock',
@@ -26,10 +37,11 @@ export async function POST(req) {
       storeId,
     })
 
+    console.log('POST /api/admin/products: Product created successfully', { id: newProduct.id, name: newProduct.name })
     return new Response(JSON.stringify(newProduct), { status: 201 })
   } catch (err) {
-    console.error('POST /api/admin/products failed:', err)
-    return new Response(JSON.stringify({ error: 'Failed to create product' }), { status: 500 })
+    console.error('POST /api/admin/products failed:', err.message, err.stack)
+    return new Response(JSON.stringify({ error: err.message || 'Failed to create product' }), { status: 500 })
   }
 }
 
