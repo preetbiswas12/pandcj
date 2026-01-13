@@ -1,17 +1,21 @@
 "use client"
-import { StarIcon, Heart, MessageCircle } from 'lucide-react'
+import { StarIcon, Heart, MessageCircle, ShoppingCartIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { addToWishlist, removeFromWishlist } from '@/lib/features/wishlist/wishlistSlice'
+import { addToCart } from '@/lib/features/cart/cartSlice'
 import { useAuth } from '@/app/providers/AuthProvider'
+import { useRouter } from 'next/navigation'
 import ReviewForm from './ReviewForm'
 import { generateProductSlug } from '@/lib/productSlug'
+import toast from 'react-hot-toast'
 
 const ProductCard = ({ product }) => {
 
     const dispatch = useDispatch()
+    const router = useRouter()
     const { user } = useAuth()
     const wishlistItems = useSelector(state => state.wishlist?.items || [])
     const inWishlist = wishlistItems.find(i => i.id === product.id)
@@ -63,7 +67,28 @@ const ProductCard = ({ product }) => {
         }
     }
 
+    const handleBuyNow = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        
+        dispatch(addToCart({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.images?.[0],
+            product: product,
+            quantity: 1
+        }))
+        
+        toast.success('Added to cart!')
+        setTimeout(() => {
+            router.push('/cart')
+        }, 500)
+    }
+
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
+    const originalPrice = product.originalPrice || product.mrp
+    const discountPercent = originalPrice ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0
 
     return (
         <>
@@ -88,7 +113,24 @@ const ProductCard = ({ product }) => {
                                 <StarIcon key={index} size={14} className='sm:size-[16px] md:size-[18px] shrink-0' fill={rating >= index + 1 ? "#00C950" : "#D1D5DB"} stroke={rating >= index + 1 ? "#00C950" : "#D1D5DB"} />
                             ))}
                         </div>
-                        <p className='font-semibold text-xs sm:text-sm md:text-base text-slate-900'>{currency}{product.price}</p>
+                        <div className='flex items-center gap-2'>
+                            <p className='font-semibold text-xs sm:text-sm md:text-base text-slate-900'>{currency}{product.price}</p>
+                            {originalPrice && originalPrice > product.price && (
+                                <p className='text-xs sm:text-sm text-slate-400 line-through'>{currency}{originalPrice}</p>
+                            )}
+                            {discountPercent > 0 && (
+                                <span className='text-xs sm:text-sm font-medium text-green-600'>Save {discountPercent}%</span>
+                            )}
+                        </div>
+                        {/* Buy Now Button - Mobile only */}
+                        <button
+                            onClick={handleBuyNow}
+                            disabled={product.inStock === false || product.stock === 'out_of_stock'}
+                            className='sm:hidden w-full mt-2 flex items-center justify-center gap-2 bg-slate-800 text-white text-xs font-medium py-2 px-3 rounded hover:bg-slate-900 active:scale-95 transition-all disabled:bg-slate-300 disabled:cursor-not-allowed'
+                        >
+                            <ShoppingCartIcon size={14} />
+                            Buy Now
+                        </button>
                     </div>
                 </Link>
 
