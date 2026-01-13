@@ -83,10 +83,17 @@ export async function POST(req) {
         form.append('public_id', publicId)
         if (uploadPreset) form.append('upload_preset', uploadPreset)
 
+        // Fetch with timeout to Cloudinary
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 12000) // 12s timeout for Cloudinary
+        
         const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
           method: 'POST',
           body: form,
+          signal: controller.signal,
         })
+
+        clearTimeout(timeout)
 
         if (!res.ok) {
           const text = await res.text()
@@ -103,10 +110,14 @@ export async function POST(req) {
           return new Response(JSON.stringify({ url: bodyJson.secure_url, provider: 'cloudinary', raw: bodyJson, dataUrl: `data:${mimeType};base64,${base64Data}` }), { status: 201 })
         }
       } catch (cloudErr) {
-        console.error('Cloudinary upload error', cloudErr)
+        console.error('Cloudinary upload error', cloudErr.message || cloudErr)
         // If it's our validation error, return it immediately
         if (cloudErr.message && cloudErr.message.includes('Invalid filename')) {
           return new Response(JSON.stringify({ error: { message: cloudErr.message } }), { status: 400 })
+        }
+        // If it's an abort error (timeout), return timeout error
+        if (cloudErr.name === 'AbortError') {
+          return new Response(JSON.stringify({ error: { message: 'Upload timeout - please try again' } }), { status: 408 })
         }
         // Otherwise continue to fallback
       }

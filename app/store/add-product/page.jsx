@@ -119,22 +119,36 @@ export default function StoreAddProduct() {
                 const file = item?.file
                 const preview = item?.preview
                 if (!file) continue
-                const dataUrl = preview || await new Promise((resolve, reject) => {
-                    const r = new FileReader()
-                    r.onload = () => resolve(r.result)
-                    r.onerror = reject
-                    r.readAsDataURL(file)
-                })
-                const base64 = dataUrl.split(',')[1]
-                const controller = new AbortController()
-                const timeout = setTimeout(() => controller.abort(), 5000) // 5s timeout for upload
-                const res = await fetch('/api/admin/stores/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: base64, filename: file.name }), signal: controller.signal })
-                clearTimeout(timeout)
-                const body = await res.json()
-                if (!res.ok) {
-                    throw new Error(`Upload failed: ${body?.error?.message || 'Unknown error'}`)
+                
+                try {
+                    console.log('[AddProduct] Uploading image:', file.name)
+                    const dataUrl = preview || await new Promise((resolve, reject) => {
+                        const r = new FileReader()
+                        r.onload = () => resolve(r.result)
+                        r.onerror = reject
+                        r.readAsDataURL(file)
+                    })
+                    const base64 = dataUrl.split(',')[1]
+                    const controller = new AbortController()
+                    const timeout = setTimeout(() => controller.abort(), 15000) // 15s timeout for Cloudinary upload
+                    const res = await fetch('/api/admin/stores/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: base64, filename: file.name }), signal: controller.signal })
+                    clearTimeout(timeout)
+                    const body = await res.json()
+                    if (!res.ok) {
+                        console.error('[AddProduct] Upload failed:', body?.error?.message)
+                        throw new Error(`Upload failed: ${body?.error?.message || 'Unknown error'}`)
+                    }
+                    console.log('[AddProduct] Image uploaded successfully:', body?.url)
+                    if (body?.url) uploadedUrls.push(body.url)
+                } catch (uploadErr) {
+                    console.error('[AddProduct] Upload error:', uploadErr.message)
+                    if (uploadErr.name === 'AbortError') {
+                        toast.error(`Image upload timeout for ${file.name} - please try again`)
+                    } else {
+                        toast.error(`Failed to upload ${file.name}: ${uploadErr.message}`)
+                    }
+                    throw uploadErr
                 }
-                if (body?.url) uploadedUrls.push(body.url)
             }
 
             if (uploadedUrls.length === 0) {
@@ -157,7 +171,7 @@ export default function StoreAddProduct() {
             console.log('[AddProduct] Sending payload:', payload)
 
             const controller2 = new AbortController()
-            const timeout2 = setTimeout(() => controller2.abort(), 60000) // 60s timeout (Vercel limit is 300s)
+            const timeout2 = setTimeout(() => controller2.abort(), 45000) // 45s timeout for product creation
             const res = await fetch('/api/admin/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller2.signal })
             clearTimeout(timeout2)
             

@@ -3,19 +3,30 @@ import mongodb from '@/lib/mongodb'
 // Create new product
 export async function POST(req) {
   const startTime = Date.now()
+  const REQUEST_TIMEOUT = 25000 // 25 seconds to stay under Vercel 30s limit
+  
   try {
     console.log('[POST /api/admin/products] Request started')
+    
+    // Set up timeout abort
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      console.error('[POST /api/admin/products] Request timeout after 25s')
+      controller.abort()
+    }, REQUEST_TIMEOUT)
     
     const body = await req.json()
     const { name, description, mrp, price, images, category, stock, storeId } = body
 
     console.log('[POST /api/admin/products] Validating input...')
     if (!name || !description || !images || !Array.isArray(images) || images.length === 0) {
+      clearTimeout(timeoutId)
       console.error('POST /api/admin/products: Missing required fields', { name: !!name, description: !!description, images: Array.isArray(images) ? images.length : 'not-array' })
       return new Response(JSON.stringify({ error: 'name, description, and at least one image are required' }), { status: 400 })
     }
 
     if (!storeId) {
+      clearTimeout(timeoutId)
       console.error('POST /api/admin/products: Missing storeId')
       return new Response(JSON.stringify({ error: 'storeId is required' }), { status: 400 })
     }
@@ -25,6 +36,7 @@ export async function POST(req) {
     const priceNum = Number(price)
     
     if (isNaN(mrrpNum) || isNaN(priceNum)) {
+      clearTimeout(timeoutId)
       console.error('POST /api/admin/products: Invalid price values', { mrp, price })
       return new Response(JSON.stringify({ error: 'MRP and price must be valid numbers' }), { status: 400 })
     }
@@ -43,12 +55,13 @@ export async function POST(req) {
       storeId,
     })
 
+    clearTimeout(timeoutId)
     const elapsed = Date.now() - startTime
     console.log('[POST /api/admin/products] Product created successfully', { id: newProduct.id, name: newProduct.name, elapsedMs: elapsed })
     return new Response(JSON.stringify(newProduct), { status: 201 })
   } catch (err) {
     const elapsed = Date.now() - startTime
-    console.error('[POST /api/admin/products] Failed after ' + elapsed + 'ms:', err.message, err.stack)
+    console.error('[POST /api/admin/products] Failed after ' + elapsed + 'ms:', err.message)
     return new Response(JSON.stringify({ error: err.message || 'Failed to create product' }), { status: 500 })
   }
 }
