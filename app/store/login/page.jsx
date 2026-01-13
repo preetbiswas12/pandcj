@@ -115,6 +115,4 @@ export default function StoreLoginPage() {
     </div>
   )
 }
-    </div>
-  )
-}
+
