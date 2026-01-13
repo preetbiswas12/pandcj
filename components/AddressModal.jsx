@@ -1,13 +1,15 @@
 'use client'
-import { XIcon } from "lucide-react"
+import { XIcon, ArrowLeftIcon } from "lucide-react"
 import { useState, useEffect } from "react"
 import { toast } from "react-hot-toast"
 import { useDispatch } from 'react-redux'
+import { useRouter } from "next/navigation"
 import { addAddress } from '@/lib/features/address/addressSlice'
 
 const AddressModal = ({ setShowAddressModal, initial = {}, onSave = null }) => {
 
     const dispatch = useDispatch()
+    const router = useRouter()
 
     const [address, setAddress] = useState({
         name: '',
@@ -61,7 +63,10 @@ const AddressModal = ({ setShowAddressModal, initial = {}, onSave = null }) => {
     return (
         <form onSubmit={e => toast.promise(handleSubmit(e), { loading: 'Adding Address...' })} className="fixed inset-0 z-50 bg-white/60 backdrop-blur h-screen flex items-center justify-center p-4">
             <div className="flex flex-col gap-3 sm:gap-5 text-slate-700 w-full max-w-sm">
-                <h2 className="text-2xl sm:text-3xl">Add New <span className="font-semibold">Address</span></h2>
+                <div className="flex items-center justify-between">
+                    <h2 className="text-2xl sm:text-3xl">Add New <span className="font-semibold">Address</span></h2>
+                    <ArrowLeftIcon onClick={() => setShowAddressModal(false)} className="cursor-pointer hover:text-slate-500 transition" size={24} />
+                </div>
                 <input name="name" onChange={handleAddressChange} value={address.name} className="p-2 px-4 outline-none border border-slate-200 rounded w-full text-sm sm:text-base" type="text" placeholder="Full name" required />
                 <input name="email" onChange={handleAddressChange} value={address.email} className="p-2 px-4 outline-none border border-slate-200 rounded w-full text-sm sm:text-base" type="email" placeholder="Email address" required />
                 <input name="street" onChange={handleAddressChange} value={address.street} className="p-2 px-4 outline-none border border-slate-200 rounded w-full text-sm sm:text-base" type="text" placeholder="Street / Address line" />

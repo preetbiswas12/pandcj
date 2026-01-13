@@ -386,9 +386,12 @@ const OrderSummary = ({ totalPrice, items }) => {
                                     <select className='border border-slate-400 p-2 sm:p-2 w-full my-2 sm:my-3 outline-none rounded text-xs sm:text-sm' onChange={(e) => setSelectedAddress(addressList[e.target.value])} >
                                         <option value="">Select Address</option>
                                         {
-                                            addressList.map((address, index) => (
-                                                <option key={index} value={index}>{address.name}, {address.city}, {address.state}, {address.zip}</option>
-                                            ))
+                                            addressList
+                                                .map((address, index) => ({ address, index }))
+                                                .filter(({ address }) => address.name && address.city && address.zip)
+                                                .map(({ address, index }) => (
+                                                    <option key={index} value={index}>{address.name}, {address.city}, {address.state}, {address.zip}</option>
+                                                ))
                                         }
                                     </select>
                                 )

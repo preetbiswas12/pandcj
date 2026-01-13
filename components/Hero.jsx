@@ -155,7 +155,7 @@ const Hero = ({ initial = null }) => {
                     </div>
                     <Image className='sm:absolute bottom-0 right-0 md:right-10 w-full sm:max-w-sm' src={left.modelImage} alt="" />
                 </div>
-                    <div className='flex flex-row md:flex-col xl:flex-row gap-3 sm:gap-5 w-full xl:max-w-sm text-xs sm:text-sm text-black'>
+                    <div className='flex flex-col md:flex-row xl:flex-col gap-3 sm:gap-5 w-full xl:max-w-sm text-xs sm:text-sm text-black'>
                     <div
                         className='flex-1 flex flex-row sm:flex-row md:flex-col xl:flex-row xl:items-center xl:justify-between w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 px-4 sm:px-8 group'
                         style={
