@@ -12,8 +12,13 @@ function loadCartFromStorage() {
     const raw = window.localStorage.getItem(CART_STORAGE_KEY)
     if (!raw) return undefined
     const parsed = JSON.parse(raw)
+    // Ensure cart state has proper structure
+    const cart = {
+      items: Array.isArray(parsed?.items) ? parsed.items : [],
+      total: typeof parsed?.total === 'number' ? parsed.total : 0
+    }
     // expected shape matches cart slice state
-    return { cart: parsed }
+    return { cart }
   } catch (e) {
     console.warn('Could not load cart from storage', e)
     return undefined

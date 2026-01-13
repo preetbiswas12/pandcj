@@ -15,13 +15,14 @@ export default function Cart() {
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$';
     
-    const { items: cartItems } = useSelector(state => state.cart);
+    const { items: cartItems = [] } = useSelector(state => state.cart || { items: [] });
     const dispatch = useDispatch();
 
     const [totalPrice, setTotalPrice] = useState(0);
     const wishlistItems = useSelector(state => state.wishlist?.items || [])
 
     const calculateTotalPrice = () => {
+        if (!Array.isArray(cartItems)) return
         const total = cartItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
         setTotalPrice(total)
     }
