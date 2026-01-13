@@ -396,7 +396,7 @@ const OrderSummary = ({ totalPrice, items }) => {
                                     </select>
                                 )
                             }
-                            <button className='flex items-center gap-1 text-slate-600 mt-1 text-xs sm:text-sm' onClick={() => setShowAddressModal(true)} >Add Address <PlusIcon size={16} /></button>
+                            <button className='flex items-center gap-1 text-slate-600 mt-1 text-xs sm:text-sm' aria-label="Add delivery address" onClick={() => setShowAddressModal(true)} >Add Address <PlusIcon size={16} /></button>
                         </div>
                     )
                 }
@@ -421,9 +421,10 @@ const OrderSummary = ({ totalPrice, items }) => {
                 {
                     !coupon ? (
                         <form onSubmit={e => toast.promise(handleCouponCode(e), { loading: 'Checking Coupon...' })} className='flex flex-col sm:flex-row gap-2 sm:gap-3 mt-2 sm:mt-3'>
-                            <input onChange={(e) => setCouponCodeInput(e.target.value)} value={couponCodeInput} type="text" placeholder='Coupon Code' className='border border-slate-400 p-1.5 sm:p-2 rounded w-full outline-none text-xs sm:text-sm' />
-                            <button className='bg-slate-600 text-white px-3 py-1.5 sm:py-2 rounded hover:bg-slate-800 active:scale-95 transition-all whitespace-nowrap text-xs sm:text-sm'>Apply</button>
-                        </form>
+                        <label htmlFor="coupon-input" className='sr-only'>Coupon Code</label>
+                        <input id="coupon-input" onChange={(e) => setCouponCodeInput(e.target.value)} value={couponCodeInput} type="text" placeholder='Coupon Code' className='border border-slate-400 p-1.5 sm:p-2 rounded w-full outline-none text-xs sm:text-sm' />
+                        <button type="submit" aria-label="Apply coupon code" className='bg-slate-600 text-white px-3 py-1.5 sm:py-2 rounded hover:bg-slate-800 active:scale-95 transition-all whitespace-nowrap text-xs sm:text-sm'>Apply</button>
+                    </form>
                     ) : (
                         <div className='w-full flex items-center justify-center gap-1 sm:gap-2 text-xs mt-2 flex-wrap'>
                             <p>Code: <span className='font-semibold'>{coupon.code.toUpperCase()}</span></p>

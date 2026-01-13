@@ -55,7 +55,7 @@ export default function WishlistPage() {
                             <div key={item.id} className="flex items-center justify-between bg-white p-3 rounded shadow">
                                 <div className="flex items-center gap-3">
                                     <div className="bg-slate-100 size-14 rounded flex items-center justify-center">
-                                        <Image src={item.images && item.images[0] ? item.images[0] : '/assets/slide_1.jpg'} alt="" width={64} height={64} />
+                                        <Image src={item.images && item.images[0] ? item.images[0] : '/assets/slide_1.jpg'} alt={item.name || "Product image"} width={64} height={64} />
                                     </div>
                                     <div>
                                         <p className="font-medium">{item.name}</p>

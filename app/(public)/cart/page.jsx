@@ -80,7 +80,7 @@ export default function Cart() {
                                             <tr key={index} className="border-b hover:bg-slate-50 transition">
                                                 <td className="flex gap-3 py-3">
                                                     <div className="flex gap-3 items-center justify-center bg-slate-100 size-16 sm:size-18 rounded-md flex-shrink-0">
-                                                        <Image src={item.image} className="h-12 sm:h-14 w-auto" alt="" width={45} height={45} />
+                                                        <Image src={item.image} className="h-12 sm:h-14 w-auto" alt={item.name || "Product image"} width={45} height={45} />
                                                     </div>
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-medium truncate">{item.name}</p>
@@ -111,7 +111,7 @@ export default function Cart() {
                                     <div key={index} className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200 hover:shadow-md transition">
                                         <div className="flex gap-3 mb-3">
                                             <div className="flex gap-3 items-center justify-center bg-slate-100 size-16 rounded-md flex-shrink-0">
-                                                <Image src={item.image} className="h-12 w-auto" alt="" width={45} height={45} />
+                                                <Image src={item.image} className="h-12 w-auto" alt={item.name || "Product image"} width={45} height={45} />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium truncate">{item.name}</p>

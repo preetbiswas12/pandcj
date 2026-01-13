@@ -89,10 +89,11 @@ const RatingModal = ({ ratingModal, setRatingModal }) => {
 
                     {/* Review Text */}
                     <div>
-                        <label className='block text-sm font-medium text-slate-700 mb-2'>
+                        <label htmlFor='modal-review-text' className='block text-sm font-medium text-slate-700 mb-2'>
                             Your Review (minimum 5 characters)
                         </label>
                         <textarea
+                            id='modal-review-text'
                             className='w-full p-3 border border-gray-300 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none text-sm'
                             placeholder='Share your experience...'
                             rows='4'

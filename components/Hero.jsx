@@ -153,7 +153,7 @@ const Hero = ({ initial = null }) => {
                             <button className='bg-slate-800 text-white text-xs sm:text-sm py-2 sm:py-2.5 px-5 sm:px-7 md:py-3 md:px-10 lg:py-5 lg:px-12 mt-3 sm:mt-4 md:mt-8 lg:mt-10 rounded-md hover:bg-slate-900 active:scale-95 active:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-600 focus:ring-offset-2 transition-all duration-150 shadow-md hover:shadow-lg transform hover:scale-105'>BUY NOW</button>
                         </a>
                     </div>
-                    <Image className='sm:absolute bottom-0 right-0 md:right-10 w-full sm:max-w-sm' src={left.modelImage} alt="" />
+                    <Image className='sm:absolute bottom-0 right-0 md:right-10 w-full sm:max-w-sm' src={left.modelImage} alt="Featured product model" />
                 </div>
                     <div className='flex flex-col md:flex-row xl:flex-col gap-3 sm:gap-5 w-full xl:max-w-sm text-xs sm:text-sm text-black'>
                     <div
@@ -166,7 +166,7 @@ const Hero = ({ initial = null }) => {
                                     : { backgroundColor: '#FED7AA' }
                         }
                     >
-                        <Image className='w-24 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last' src={topRight.image} alt="" />
+                        <Image className='w-24 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last' src={topRight.image} alt={topRight.title || "Featured item"} />
                         <div className='mt-4 sm:mt-4 md:mt-4 xl:mt-0 ml-4 sm:ml-0'>
                             <p className='text-2xl sm:text-2xl md:text-3xl font-medium text-black max-w-40'>{topRight.title}</p>
                             <p className='flex items-center gap-1 mt-2 sm:mt-4'><a href={topRight.link} className='flex items-center gap-1 text-black text-sm sm:text-sm'>View more <ArrowRightIcon className='group-hover:ml-2 transition-all' size={16} /></a> </p>
@@ -182,7 +182,7 @@ const Hero = ({ initial = null }) => {
                                     : { backgroundColor: '#DBEAFE' }
                         }
                     >
-                        <Image className='w-24 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last' src={bottomRight.image} alt="" />
+                        <Image className='w-24 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last' src={bottomRight.image} alt={bottomRight.title || "Featured item"} />
                         <div className='mt-4 sm:mt-4 md:mt-4 xl:mt-0 ml-4 sm:ml-0'>
                             <p className='text-2xl sm:text-2xl md:text-3xl font-medium text-black max-w-40'>{bottomRight.title}</p>
                             <p className='flex items-center gap-1 mt-2 sm:mt-4'><a href={bottomRight.link} className='flex items-center gap-1 text-black text-sm sm:text-sm'>View more <ArrowRightIcon className='group-hover:ml-2 transition-all' size={16} /></a> </p>

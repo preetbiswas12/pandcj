@@ -90,10 +90,11 @@ const ReviewForm = ({ productId, productName, onClose, onSuccess }) => {
 
                 {/* Review Text */}
                 <div className='mb-5 sm:mb-6'>
-                    <label className='block text-xs sm:text-sm font-medium text-slate-700 mb-2'>
+                    <label htmlFor='review-textarea' className='block text-xs sm:text-sm font-medium text-slate-700 mb-2'>
                         Your Review (minimum 5 characters)
                     </label>
                     <textarea
+                        id='review-textarea'
                         className='w-full p-2 sm:p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none text-xs sm:text-sm'
                         placeholder='Share your experience with this product...'
                         rows='4'

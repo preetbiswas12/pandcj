@@ -91,7 +91,7 @@ const ProductDetails = ({ product = {} }) => {
                 <div className="flex sm:flex-col gap-3">
                     {images.map((image, index) => (
                         <div key={index} onClick={() => setMainImage(images[index])} className="bg-slate-100 flex items-center justify-center size-26 rounded-lg group cursor-pointer">
-                            <Image src={image} className="group-hover:scale-103 group-active:scale-95 transition" alt="" width={45} height={45} />
+                            <Image src={image} className="group-hover:scale-103 group-active:scale-95 transition" alt="Product thumbnail" width={45} height={45} />
                         </div>
                     ))}
                 </div>
@@ -114,7 +114,7 @@ const ProductDetails = ({ product = {} }) => {
                     });
                     setShowLens(true);
                 }} onMouseLeave={() => setShowLens(false)} className="relative flex justify-center items-center h-100 sm:size-113 rounded-lg overflow-hidden bg-slate-100">
-                    <Image src={mainImage} alt="" width={250} height={250} className="w-full h-full object-cover" />
+                    <Image src={mainImage} alt="Main product image" width={250} height={250} className="w-full h-full object-cover" />
                     {showLens && (
                         <div style={{
                             position: 'absolute',
@@ -161,7 +161,7 @@ const ProductDetails = ({ product = {} }) => {
                         <button onClick={() => !isInCart ? addToCartHandler() : router.push('/cart')} className="w-full sm:w-auto bg-slate-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded hover:bg-slate-900 active:scale-95 transition">
                             {!isInCart ? 'Add to Cart' : 'View Cart'}
                         </button>
-                        <button title="Add to wishlist" onClick={toggleWishlist} className={`w-full sm:w-auto flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded text-xs sm:text-sm font-medium ${inWishlist ? 'bg-rose-100 text-rose-600' : 'bg-white border'} border-slate-200`}>
+                        <button title="Add to wishlist" aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"} onClick={toggleWishlist} className={`w-full sm:w-auto flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded text-xs sm:text-sm font-medium ${inWishlist ? 'bg-rose-100 text-rose-600' : 'bg-white border'} border-slate-200`}>
                             <Heart size={16} className="shrink-0" />
                             <span className="hidden sm:inline">{inWishlist ? 'In Wishlist' : 'Add to Wishlist'}</span>
                             <span className="sm:hidden">{inWishlist ? 'Saved' : 'Wishlist'}</span>

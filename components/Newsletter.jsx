@@ -48,8 +48,9 @@ const Newsletter = () => {
         <div className='flex flex-col items-center mx-4 my-15'>
             <Title title="Join Our Family" description="Subscribe to get exclusive deals, new arrivals, and insider updates delivered straight to your inbox on release." visibleButton={false} />
             <form onSubmit={handleSubmit} className='flex bg-slate-100 text-sm p-1 rounded-full w-full max-w-xl my-10 border-2 border-white ring ring-slate-200'>
-                <input value={email} onChange={(e) => setEmail(e.target.value)} className='flex-1 pl-5 outline-none bg-transparent' type="email" placeholder='Enter your email address' />
-                <button disabled={loading} type="submit" className='font-medium bg-yellow-500 text-white px-7 py-3 rounded-full hover:scale-103 active:scale-95 transition'>
+                <label htmlFor='newsletter-email' className='sr-only'>Email address for newsletter</label>
+                <input id='newsletter-email' value={email} onChange={(e) => setEmail(e.target.value)} className='flex-1 pl-5 outline-none bg-transparent' type="email" placeholder='Enter your email address' aria-label='Email address for newsletter' />
+                <button disabled={loading} type="submit" className='font-medium bg-yellow-500 text-white px-7 py-3 rounded-full hover:scale-103 active:scale-95 transition' aria-label={loading ? 'Sending newsletter subscription' : 'Subscribe to newsletter'}>
                     {loading ? 'Sending...' : 'Get Updates'}
                 </button>
             </form>

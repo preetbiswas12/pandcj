@@ -114,7 +114,7 @@ export default function Dashboard() {
                         <div key={index} className="flex max-sm:flex-col gap-5 sm:items-center justify-between py-6 border-b border-slate-200 text-sm text-slate-600 max-w-4xl">
                             <div>
                                 <div className="flex gap-3">
-                                    <Image src={review.user.image} alt="" className="w-10 aspect-square rounded-full" width={100} height={100} />
+                                    <Image src={review.user.image} alt="User avatar" className="w-10 aspect-square rounded-full" width={100} height={100} />
                                     <div>
                                         <p className="font-medium">{review.user.name}</p>
                                         <p className="font-light text-slate-500">{new Date(review.createdAt).toDateString()}</p>
