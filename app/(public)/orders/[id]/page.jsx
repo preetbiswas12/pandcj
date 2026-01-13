@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser } from '@clerk/nextjs'
+import { useAuth } from '@/app/providers/AuthProvider'
 import Image from 'next/image'
 import { CheckCircleIcon, ChevronRightIcon, PackageIcon, TruckIcon, CheckIcon } from 'lucide-react'
 
@@ -113,7 +113,7 @@ const OrderStatusTimeline = ({ status, createdAt }) => {
 export default function OrderDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user, isSignedIn } = useUser()
+  const { user, isSignedIn } = useAuth()
   const orderId = params.id
 
   const [order, setOrder] = useState(null)

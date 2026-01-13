@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useUser } from "@clerk/nextjs"
+import { useAuth } from "@/app/providers/AuthProvider"
 import Loading from "@/components/Loading"
 import toast from "react-hot-toast"
 
@@ -9,7 +9,7 @@ export default function AdminStoreEdit() {
   const router = useRouter()
   const params = useSearchParams()
   const storeId = params?.get("id")
-  const { user } = useUser()
+  const { user } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({

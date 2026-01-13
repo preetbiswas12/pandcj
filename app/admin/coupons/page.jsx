@@ -15,6 +15,7 @@ export default function AdminCoupons() {
         forNewUser: false,
         forMember: false,
         isPublic: false,
+        applyToShipping: false,
         expiresAt: new Date()
     })
 
@@ -37,6 +38,7 @@ export default function AdminCoupons() {
                 forNewUser: !!newCoupon.forNewUser,
                 forMember: !!newCoupon.forMember,
                 isPublic: !!newCoupon.isPublic,
+                applyToShipping: !!newCoupon.applyToShipping,
                 expiresAt: typeof newCoupon.expiresAt === 'string' ? newCoupon.expiresAt : new Date(newCoupon.expiresAt).toISOString()
             }
             const res = await fetch('/api/admin/coupons', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
@@ -44,7 +46,7 @@ export default function AdminCoupons() {
             if (!res.ok) throw new Error('Add failed')
             const created = await res.json()
             setCoupons(prev => [created, ...prev])
-            setNewCoupon({ code: '', description: '', discount: '', forNewUser: false, forMember: false, isPublic: false, expiresAt: new Date() })
+            setNewCoupon({ code: '', description: '', discount: '', forNewUser: false, forMember: false, isPublic: false, applyToShipping: false, expiresAt: new Date() })
             toast.success('Coupon added')
         } catch (e) { console.error(e); toast.error('Could not add coupon') }
     }
@@ -121,6 +123,17 @@ export default function AdminCoupons() {
                         </label>
                         <p>For Member</p>
                     </div>
+                    <div className="flex gap-2 mt-3">
+                        <label className="relative inline-flex items-center cursor-pointer text-gray-900 gap-3">
+                            <input type="checkbox" className="sr-only peer"
+                                name="applyToShipping" checked={newCoupon.applyToShipping}
+                                onChange={(e) => setNewCoupon({ ...newCoupon, applyToShipping: e.target.checked })}
+                            />
+                            <div className="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-yellow-600 transition-colors duration-200"></div>
+                            <span className="dot absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></span>
+                        </label>
+                        <p>Apply to Shipping</p>
+                    </div>
                 </div>
                 <button className="mt-4 p-2 px-10 rounded bg-slate-700 text-white active:scale-95 transition">Add Coupon</button>
             </form>
@@ -138,6 +151,7 @@ export default function AdminCoupons() {
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">Expires At</th>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">New User</th>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">For Member</th>
+                                <th className="py-3 px-4 text-left font-semibold text-slate-600">Apply to Shipping</th>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">Action</th>
                             </tr>
                         </thead>
@@ -150,6 +164,7 @@ export default function AdminCoupons() {
                                     <td className="py-3 px-4 text-slate-800">{format(coupon.expiresAt, 'yyyy-MM-dd')}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.forNewUser ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.forMember ? 'Yes' : 'No'}</td>
+                                    <td className="py-3 px-4 text-slate-800">{coupon.applyToShipping ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">
                                         <DeleteIcon onClick={() => toast.promise(deleteCoupon(coupon.code), { loading: "Deleting coupon...", success: "Coupon deleted", error: (err) => err.message })} className="w-5 h-5 text-red-500 hover:text-red-800 cursor-pointer transition" />
                                     </td>
