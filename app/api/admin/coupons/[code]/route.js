@@ -2,7 +2,7 @@ import mongodb from '@/lib/mongodb'
 
 export async function GET(req, { params }) {
   try {
-    const code = params?.code
+    const code = params?.code || new URL(req.url).pathname.split('/').pop()
     if (!code) return new Response(JSON.stringify({ error: 'Missing code' }), { status: 400 })
 
     const coupon = await mongodb.coupon.findByCode(code)
@@ -19,7 +19,9 @@ export async function GET(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const code = params?.code
+    const code = params?.code || new URL(req.url).pathname.split('/').pop()
+    console.log('[Coupons DELETE] Received code:', code, 'from params:', params?.code, 'and URL:', new URL(req.url).pathname)
+    
     if (!code) return new Response(JSON.stringify({ error: 'Missing code' }), { status: 400 })
 
     const success = await mongodb.coupon.delete(code)
@@ -27,6 +29,7 @@ export async function DELETE(req, { params }) {
       return new Response(JSON.stringify({ error: 'Coupon not found' }), { status: 404 })
     }
 
+    console.log('[Coupons DELETE] Successfully deleted coupon:', code)
     return new Response(JSON.stringify({ success }), { status: 200 })
   } catch (err) {
     console.error('DELETE /api/admin/coupons/[code] failed:', err)
@@ -36,7 +39,7 @@ export async function DELETE(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const code = params?.code
+    const code = params?.code || new URL(req.url).pathname.split('/').pop()
     if (!code) return new Response(JSON.stringify({ error: 'Missing code' }), { status: 400 })
 
     const body = await req.json()
