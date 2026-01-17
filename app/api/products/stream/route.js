@@ -1,6 +1,9 @@
 import mongodb from '@/lib/mongodb'
 
 export async function GET(req) {
+  let changeStream = null
+  let writer = null
+  
   try {
     const url = new URL(req.url)
     const storeId = url.searchParams.get('storeId')
@@ -12,36 +15,60 @@ export async function GET(req) {
 
     const coll = db.collection('products')
 
-    // Initial data
     const filter = storeId ? { storeId } : {}
-    const initial = await coll.find(filter).toArray()
 
     const { readable, writable } = new TransformStream()
-    const writer = writable.getWriter()
+    writer = writable.getWriter()
 
     const send = async (data) => {
-      const payload = `event: update\ndata: ${JSON.stringify(data)}\n\n`
-      await writer.write(new TextEncoder().encode(payload))
+      try {
+        const payload = `event: update\ndata: ${JSON.stringify(data)}\n\n`
+        await writer.write(new TextEncoder().encode(payload))
+      } catch (e) {
+        console.error('Send error:', e)
+      }
     }
 
-    // Send initial product list
-    await send({ type: 'initial', products: initial })
+    // Stream initial products with pagination to avoid loading all into memory
+    const limit = 100
+    let skip = 0
+    let hasMore = true
+    
+    while (hasMore) {
+      const batch = await coll.find(filter).skip(skip).limit(limit).toArray()
+      if (batch.length === 0) {
+        hasMore = false
+      } else {
+        await send({ type: 'initial_batch', products: batch, skip, hasMore: batch.length === limit })
+        skip += limit
+      }
+    }
+    await send({ type: 'initial_complete' })
 
     // Watch for changes
     const pipeline = storeId ? [{ $match: { storeId } }] : []
-    const changeStream = coll.watch(pipeline, { fullDocument: 'updateLookup' })
+    changeStream = coll.watch(pipeline, { fullDocument: 'updateLookup' })
 
     // Background listener
     ;(async () => {
       try {
         for await (const change of changeStream) {
-          const products = await coll.find(filter).toArray()
-          await send({ type: 'products_updated', products, change: change.operationType })
+          // Only send the changed document, not all products
+          await send({ 
+            type: 'product_' + change.operationType, 
+            document: change.fullDocument,
+            documentKey: change.documentKey
+          })
         }
       } catch (e) {
-        console.error('Change stream error:', e)
+        if (!e.message.includes('Stream closed')) {
+          console.error('Change stream error:', e)
+        }
       } finally {
-        try { await writer.close() } catch (e) {}
+        try { 
+          if (changeStream) await changeStream.close()
+          if (writer) await writer.close() 
+        } catch (e) {}
       }
     })()
 
@@ -55,6 +82,10 @@ export async function GET(req) {
     })
   } catch (err) {
     console.error('Products stream error:', err)
+    try { 
+      if (changeStream) await changeStream.close()
+      if (writer) await writer.close() 
+    } catch (e) {}
     return new Response('error', { status: 500 })
   }
 }

@@ -1,47 +1,16 @@
-import { MongoClient } from 'mongodb'
+import mongodb from '@/lib/mongodb'
 
-const MONGO_URI = process.env.MONGODB_URI || process.env.NEXT_PUBLIC_MONGODB_URI
 const DB_NAME = process.env.MONGODB_DB || process.env.DB_NAME || process.env.NEXT_PUBLIC_MONGODB_DB || 'pandc'
 
-async function getClient() {
-  if (!MONGO_URI) throw new Error('MONGODB_URI not set')
-  
-  const globalForMongo = globalThis;
-  if (globalForMongo._mongoClient && globalForMongo._mongoClient.topology) {
-    try {
-      const pingPromise = globalForMongo._mongoClient.db('admin').command({ ping: 1 })
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Ping timeout')), 5000)
-      )
-      await Promise.race([pingPromise, timeoutPromise])
-      return globalForMongo._mongoClient
-    } catch (e) {
-      try {
-        await globalForMongo._mongoClient.close()
-      } catch {}
-      globalForMongo._mongoClient = null
-    }
-  }
-  
-  const c = new MongoClient(MONGO_URI, {
-    maxPoolSize: 10,
-    minPoolSize: 2,
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-    connectTimeoutMS: 10000,
-    retryWrites: true,
-  })
-  await c.connect()
-  globalForMongo._mongoClient = c
-  return c
-}
-
 export async function GET(req) {
+  let changeStream = null
+  let writer = null
+  
   try {
     const url = new URL(req.url)
     const key = url.searchParams.get('key') || 'banner' // 'banner' or 'pageintro'
 
-    const client = await getClient()
+    const client = await mongodb.getMongoClient?.() || (await (await import('@/lib/mongodb')).getMongoClient?.())
     const db = client.db(DB_NAME)
     const coll = db.collection('settings')
 
@@ -50,20 +19,23 @@ export async function GET(req) {
     console.log(`[Settings Stream] Initial value for key ${key}:`, initial?.value)
 
     const { readable, writable } = new TransformStream()
-    const writer = writable.getWriter()
+    writer = writable.getWriter()
 
     const send = async (obj) => {
-      const payload = `event: update\ndata: ${JSON.stringify(obj)}\n\n`
-      console.log(`[Settings Stream] Sending payload:`, payload)
-      await writer.write(new TextEncoder().encode(payload))
+      try {
+        const payload = `event: update\ndata: ${JSON.stringify(obj)}\n\n`
+        console.log(`[Settings Stream] Sending payload:`, payload)
+        await writer.write(new TextEncoder().encode(payload))
+      } catch (e) {
+        console.error('Send error:', e)
+      }
     }
 
     // Send initial event
-    await writer.ready
     await send({ type: 'initial', data: initial?.value || null })
 
     // Set up change stream - watch for updates/inserts on this key
-    const changeStream = coll.watch(
+    changeStream = coll.watch(
       [
         {
           $match: {
@@ -79,7 +51,7 @@ export async function GET(req) {
     )
 
     // Listen for changes
-    (async () => {
+    ;(async () => {
       try {
         console.log(`[Settings Stream] Listening for changes on key: ${key}`)
         for await (const change of changeStream) {
@@ -90,10 +62,14 @@ export async function GET(req) {
           }
         }
       } catch (e) {
-        console.error(`[Settings Stream] Watch error for key ${key}:`, e?.message || e)
+        if (!e.message.includes('Stream closed')) {
+          console.error(`[Settings Stream] Watch error for key ${key}:`, e?.message || e)
+        }
       } finally {
-        try { await writer.close() } catch (e) {}
-        try { await changeStream.close() } catch (e) {}
+        try { 
+          if (changeStream) await changeStream.close()
+          if (writer) await writer.close() 
+        } catch (e) {}
       }
     })()
 
@@ -106,7 +82,11 @@ export async function GET(req) {
     return new Response(readable, { status: 200, headers })
   } catch (e) {
     console.error('Settings stream error:', e)
-    return new Response('error', { status: 500 })
+    try { 
+      if (changeStream) await changeStream.close()
+      if (writer) await writer.close() 
+    } catch (err) {}
+    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { 'Content-Type': 'application/json' } })
   }
 }
 

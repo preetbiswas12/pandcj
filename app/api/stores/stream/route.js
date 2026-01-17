@@ -1,6 +1,9 @@
 import mongodb from '@/lib/mongodb'
 
 export async function GET(req) {
+  let changeStream = null
+  let writer = null
+  
   try {
     const url = new URL(req.url)
     const userId = url.searchParams.get('userId')
@@ -12,36 +15,59 @@ export async function GET(req) {
 
     const coll = db.collection('stores')
 
-    // Initial data
     const filter = userId ? { userId } : {}
-    const initial = await coll.find(filter).toArray()
 
     const { readable, writable } = new TransformStream()
-    const writer = writable.getWriter()
+    writer = writable.getWriter()
 
     const send = async (data) => {
-      const payload = `event: update\ndata: ${JSON.stringify(data)}\n\n`
-      await writer.write(new TextEncoder().encode(payload))
+      try {
+        const payload = `event: update\ndata: ${JSON.stringify(data)}\n\n`
+        await writer.write(new TextEncoder().encode(payload))
+      } catch (e) {
+        console.error('Send error:', e)
+      }
     }
 
-    // Send initial stores list
-    await send({ type: 'initial', stores: initial })
+    // Stream initial stores with pagination
+    const limit = 100
+    let skip = 0
+    let hasMore = true
+    
+    while (hasMore) {
+      const batch = await coll.find(filter).skip(skip).limit(limit).toArray()
+      if (batch.length === 0) {
+        hasMore = false
+      } else {
+        await send({ type: 'initial_batch', stores: batch, skip, hasMore: batch.length === limit })
+        skip += limit
+      }
+    }
+    await send({ type: 'initial_complete' })
 
     // Watch for changes
     const pipeline = userId ? [{ $match: { userId } }] : []
-    const changeStream = coll.watch(pipeline, { fullDocument: 'updateLookup' })
+    changeStream = coll.watch(pipeline, { fullDocument: 'updateLookup' })
 
     // Background listener
     ;(async () => {
       try {
         for await (const change of changeStream) {
-          const stores = await coll.find(filter).toArray()
-          await send({ type: 'stores_updated', stores, change: change.operationType })
+          await send({ 
+            type: 'store_' + change.operationType, 
+            document: change.fullDocument,
+            documentKey: change.documentKey
+          })
         }
       } catch (e) {
-        console.error('Change stream error:', e)
+        if (!e.message.includes('Stream closed')) {
+          console.error('Change stream error:', e)
+        }
       } finally {
-        try { await writer.close() } catch (e) {}
+        try { 
+          if (changeStream) await changeStream.close()
+          if (writer) await writer.close() 
+        } catch (e) {}
       }
     })()
 
@@ -55,6 +81,10 @@ export async function GET(req) {
     })
   } catch (err) {
     console.error('Stores stream error:', err)
-    return new Response('error', { status: 500 })
+    try { 
+      if (changeStream) await changeStream.close()
+      if (writer) await writer.close() 
+    } catch (e) {}
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } })
   }
 }

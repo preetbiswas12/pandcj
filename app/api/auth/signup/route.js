@@ -1,14 +1,9 @@
-import { MongoClient } from 'mongodb'
 import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
+import mongodb from '@/lib/mongodb'
 
-async function getDb() {
-  const uri = process.env.MONGODB_URI || process.env.NEXT_PUBLIC_MONGODB_URI
-  const dbName = process.env.MONGODB_DB || process.env.NEXT_PUBLIC_MONGODB_DB || (uri && uri.split('/').pop())
-  if (!uri || !dbName) throw new Error('MONGODB_URI or MONGODB_DB not set')
-  const client = new MongoClient(uri)
-  await client.connect()
-  return { db: client.db(dbName), client }
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+const DB_NAME = process.env.MONGODB_DB || 'pandc'
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex')
@@ -29,65 +24,59 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), { status: 400 })
     }
 
-    const { db, client } = await getDb()
-    try {
-      const users = db.collection('users')
-      const existingUser = await users.findOne({ email: String(email).toLowerCase() })
+    const client = await mongodb.getMongoClient?.() || (await (await import('@/lib/mongodb')).getMongoClient?.())
+    const db = client.db(DB_NAME)
+    const users = db.collection('users')
+    const existingUser = await users.findOne({ email: String(email).toLowerCase() })
 
-      if (existingUser) {
-        return new Response(JSON.stringify({ error: 'User already exists' }), { status: 409 })
-      }
-
-      const passwordHash = hashPassword(password)
-      const userId = new Date().getTime().toString()
-
-      const newUser = {
-        id: userId,
-        email: String(email).toLowerCase(),
-        password: passwordHash,
-        fullName: fullName || '',
-        createdAt: new Date(),
-        role: 'USER'
-      }
-
-      const result = await users.insertOne(newUser)
-
-      // Create session token
-      const token = crypto.randomBytes(32).toString('hex')
-      const sessions = db.collection('user_sessions')
-      const now = new Date()
-      const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days
-
-      await sessions.insertOne({
-        token,
-        userId: userId,
-        createdAt: now,
-        expiresAt: expires
-      })
-
-      // Set session cookie
-      const cookie = `pandc_user_token=${token}; Path=/; HttpOnly; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`
-
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          user: {
-            id: userId,
-            email: newUser.email,
-            fullName: newUser.fullName
-          }
-        }),
-        {
-          status: 201,
-          headers: { 'Set-Cookie': cookie }
-        }
-      )
-    } finally {
-      try {
-        await client.close()
-      } catch (e) {}
+    if (existingUser) {
+      return new Response(JSON.stringify({ error: 'User already exists' }), { status: 409 })
     }
+
+    const passwordHash = hashPassword(password)
+    const userId = new Date().getTime().toString()
+
+    const newUser = {
+      id: userId,
+      email: String(email).toLowerCase(),
+      password: passwordHash,
+      fullName: fullName || '',
+      createdAt: new Date(),
+      role: 'USER'
+    }
+
+    await users.insertOne(newUser)
+
+    // Create JWT token instead of session token
+    const jwtToken = jwt.sign(
+      { 
+        userId: userId, 
+        email: newUser.email,
+        role: 'USER'
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    )
+
+    // Set JWT cookie
+    const cookie = `pandc_user_token=${jwtToken}; Path=/; HttpOnly; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        user: {
+          id: userId,
+          email: newUser.email,
+          fullName: newUser.fullName
+        }
+      }),
+      {
+        status: 201,
+        headers: { 'Set-Cookie': cookie }
+      }
+    )
   } catch (err) {
+    console.error('Signup error:', err)
     return new Response(JSON.stringify({ error: err.message || 'Signup failed' }), { status: 500 })
   }
 }

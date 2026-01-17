@@ -1,8 +1,13 @@
-import { MongoClient } from 'mongodb';
+import mongodb from '@/lib/mongodb';
 
-const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = process.env.MONGODB_DB || process.env.DB_NAME || 'pandc';
 const DOMAIN = 'https://pandcjewellery.com';
+const SITEMAP_CACHE_DURATION = 3600000; // 1 hour in milliseconds
+const MAX_PRODUCTS_IN_SITEMAP = 40000; // Google sitemap limit is 50,000, we use 40,000 for safety
+const PRODUCTS_PER_BATCH = 500; // Batch size for pagination
+
+let sitemapCache = null;
+let sitemapCacheTime = 0;
 
 // Helper function to escape XML special characters
 function escapeXml(unsafe) {
@@ -37,14 +42,26 @@ function formatDate(date) {
 }
 
 async function fetchProducts() {
-  const client = new MongoClient(MONGODB_URI);
   try {
-    await client.connect();
+    const client = await mongodb.getMongoClient?.() || (await (await import('@/lib/mongodb')).getMongoClient?.());
     const db = client.db(DB_NAME);
-    const products = await db.collection('products').find({}).toArray();
+    
+    // Fetch only active, published products sorted by popularity/recency
+    // Only take the top MAX_PRODUCTS_IN_SITEMAP products
+    const products = await db.collection('products')
+      .find({ 
+        // Filter for active products (optional - adjust based on your schema)
+        // status: { $ne: 'inactive' },
+        // You can add rating or views filter here
+      })
+      .sort({ views: -1, createdAt: -1 }) // Sort by views descending, then by date
+      .limit(MAX_PRODUCTS_IN_SITEMAP)
+      .toArray();
+    
     return products;
-  } finally {
-    await client.close();
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
   }
 }
 
@@ -91,19 +108,25 @@ function generateSitemapXml(products) {
 
 `;
 
-  // Add all products
+  // Add top products only (limited to MAX_PRODUCTS_IN_SITEMAP)
   if (products && products.length > 0) {
-    products.forEach((product) => {
+    const totalProducts = products.length;
+    console.log(`Adding ${totalProducts} products to sitemap (max: ${MAX_PRODUCTS_IN_SITEMAP})`);
+    
+    products.forEach((product, index) => {
       const slug = generateProductSlug(product.name, product.id);
       const productUrl = `${DOMAIN}/product/${slug}`;
       const lastMod = product.updatedAt ? formatDate(product.updatedAt) : formatDate(product.createdAt || new Date());
+      
+      // Higher priority for top products, lower for less popular ones
+      const priority = Math.max(0.5, 0.8 - (index / totalProducts) * 0.3).toFixed(1);
       
       xml += `  <!-- Product: ${escapeXml(product.name)} -->
   <url>
     <loc>${escapeXml(productUrl)}</loc>
     <lastmod>${lastMod}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>${priority}</priority>
     <mobile:mobile />
   </url>
 
@@ -116,14 +139,30 @@ function generateSitemapXml(products) {
 }
 
 export async function GET(request) {
+  // Check cache first
+  const now = Date.now();
+  if (sitemapCache && (now - sitemapCacheTime) < SITEMAP_CACHE_DURATION) {
+    return new Response(sitemapCache, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600', // 1 hour browser cache
+      },
+    });
+  }
+
   try {
     const products = await fetchProducts();
-    const sitemapXml = generateSitemapXml(products);
-
-    return new Response(sitemapXml, {
+    const xml = generateSitemapXml(products);
+    // Cache the sitemap
+    sitemapCache = xml;
+    sitemapCacheTime = now;
+    
+    return new Response(xml, {
+      status: 200,
       headers: {
-        'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600', // 1 hour browser cache
       },
     });
   } catch (error) {

@@ -4,7 +4,7 @@ import mongodb from '@/lib/mongodb'
 
 export async function GET(req) {
   try {
-    // First try getSessionUser (cookie-based)
+    // First try getSessionUser (cookie-based JWT token)
     let user = await getSessionUser()
     
     if (user) {
@@ -24,8 +24,11 @@ export async function GET(req) {
         
         if (decoded && decoded.userId) {
           console.log('[/api/auth/me] User from JWT token:', decoded.userId)
-          // Fetch user from database
-          const users = await mongodb.user.findById(decoded.userId)
+          // Fetch user from database using global mongodb client
+          const client = await mongodb.getMongoClient?.() || (await (await import('@/lib/mongodb')).getMongoClient?.())
+          const db = client.db(process.env.MONGODB_DB || 'pandc')
+          const users = await db.collection('users').findOne({ id: decoded.userId })
+          
           if (users) {
             return new Response(
               JSON.stringify({
@@ -48,6 +51,9 @@ export async function GET(req) {
     return new Response(JSON.stringify({ error: 'Not authenticated', message: 'No valid session found' }), { status: 401 })
   } catch (err) {
     console.error('[/api/auth/me] Error:', err)
+    return new Response(JSON.stringify({ error: err.message || 'Auth check failed' }), { status: 500 })
+  }
+}
     return new Response(JSON.stringify({ error: err.message || 'Failed to fetch user' }), { status: 500 })
   }
 }

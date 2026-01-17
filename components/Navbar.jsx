@@ -65,11 +65,11 @@ const Navbar = () => {
 
                         <Link href="/cart" className={`relative flex items-center gap-2 ${scrolled ? 'text-slate-600' : 'text-white'}`} aria-label={`Shopping cart, ${cartCount} items`}>
                             <ShoppingCart size={18} />
-                            {cartCount > 0 && <span className="absolute -top-1 left-3 text-[8px] text-white bg-slate-600 size-3.5 rounded-full">{cartCount}</span>}
+                            {cartCount > 0 && <span className="absolute -top-2 left-3 text-[10px] font-bold text-white bg-slate-600 size-4 rounded-full flex items-center justify-center">{cartCount}</span>}
                         </Link>
                         <Link href="/wishlist" className={`relative flex items-center gap-2 ${scrolled ? 'text-slate-600' : 'text-white'}`} aria-label={`Wishlist, ${wishlistCount} items`}>
                             <Heart size={18} />
-                            {wishlistCount > 0 && <span className="absolute -top-1 left-3 text-[8px] text-white bg-rose-500 size-3.5 rounded-full">{wishlistCount}</span>}
+                            {wishlistCount > 0 && <span className="absolute -top-2 left-3 text-[10px] font-bold text-white bg-rose-500 size-4 rounded-full flex items-center justify-center">{wishlistCount}</span>}
                         </Link>
                         {mounted && (
                             <>

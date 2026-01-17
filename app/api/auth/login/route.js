@@ -1,17 +1,9 @@
-import { MongoClient } from 'mongodb'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
+import mongodb from '@/lib/mongodb'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
-
-async function getDb() {
-  const uri = process.env.MONGODB_URI || process.env.NEXT_PUBLIC_MONGODB_URI
-  const dbName = process.env.MONGODB_DB || process.env.NEXT_PUBLIC_MONGODB_DB || (uri && uri.split('/').pop())
-  if (!uri || !dbName) throw new Error('MONGODB_URI or MONGODB_DB not set')
-  const client = new MongoClient(uri)
-  await client.connect()
-  return { db: client.db(dbName), client }
-}
+const DB_NAME = process.env.MONGODB_DB || 'pandc'
 
 function verifyPassword(stored, provided) {
   try {
@@ -29,7 +21,8 @@ export async function POST(req) {
     const { email, password, role } = body || {}
     if (!email || !password) return new Response(JSON.stringify({ error: 'Email and password required' }), { status: 400 })
 
-    const { db, client } = await getDb()
+    const client = await mongodb.getMongoClient?.() || (await (await import('@/lib/mongodb')).getMongoClient?.())
+    const db = client.db(DB_NAME)
     try {
       const users = db.collection('users')
       const user = await users.findOne({ email: String(email).toLowerCase() })
@@ -95,10 +88,9 @@ export async function POST(req) {
           headers: { 'Set-Cookie': cookie }
         }
       )
-    } finally {
-      try {
-        await client.close()
-      } catch (e) {}
+    } catch (err) {
+      console.error('Login error:', err)
+      return new Response(JSON.stringify({ error: err.message || 'Login failed' }), { status: 500 })
     }
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message || 'Login failed' }), { status: 500 })
@@ -108,4 +100,3 @@ export async function POST(req) {
 export async function GET() {
   return new Response(JSON.stringify({ message: 'POST only' }), { status: 405 })
 }
-

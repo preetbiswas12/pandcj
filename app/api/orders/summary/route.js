@@ -18,12 +18,48 @@ async function computeSummary({ storeId } = {}) {
   const match = {}
   if (storeId) match.storeId = storeId
 
-  const all = await coll.find(match).toArray()
-  const cancelled = all.filter(o => o.status && String(o.status).toUpperCase().startsWith('CANCEL'))
-  const visible = all.filter(o => !(o.status && String(o.status).toUpperCase().startsWith('CANCEL')))
-  const totalOrders = visible.length
-  const totalAmount = visible.reduce((s, o) => s + (Number(o.total) || 0), 0)
-  return { totalOrders, totalAmount, cancelled: cancelled.length }
+  // Use aggregation pipeline to avoid loading all documents into memory
+  const pipeline = [
+    { $match: match },
+    {
+      $facet: {
+        all: [
+          { $count: 'total' }
+        ],
+        cancelled: [
+          {
+            $match: {
+              status: { $regex: '^CANCEL', $options: 'i' }
+            }
+          },
+          { $count: 'total' }
+        ],
+        revenue: [
+          {
+            $match: {
+              status: { $not: { $regex: '^CANCEL', $options: 'i' } }
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              totalAmount: { $sum: { $toDouble: '$total' } },
+              count: { $sum: 1 }
+            }
+          }
+        ]
+      }
+    }
+  ]
+
+  const result = await coll.aggregate(pipeline).toArray()
+  const data = result[0] || {}
+  
+  const totalOrders = data.revenue?.[0]?.count || 0
+  const totalAmount = data.revenue?.[0]?.totalAmount || 0
+  const cancelledCount = data.cancelled?.[0]?.total || 0
+  
+  return { totalOrders, totalAmount, cancelled: cancelledCount }
 }
 
 export async function GET(req) {

@@ -13,15 +13,23 @@ export function AuthProvider({ children }) {
     const checkAuth = async () => {
       try {
         const res = await fetch('/api/auth/me', {
-          credentials: 'include'
+          credentials: 'include',
+          cache: 'no-store'
         })
         if (res.ok) {
           const userData = await res.json()
           setUser(userData)
           setIsSignedIn(true)
+          console.log('[AuthProvider] User authenticated:', userData.email)
+        } else {
+          console.log('[AuthProvider] No valid session found')
+          setUser(null)
+          setIsSignedIn(false)
         }
       } catch (err) {
-        console.error('Auth check error:', err)
+        console.error('[AuthProvider] Auth check error:', err)
+        setUser(null)
+        setIsSignedIn(false)
       } finally {
         setIsLoading(false)
       }

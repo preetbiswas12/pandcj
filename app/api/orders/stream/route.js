@@ -1,90 +1,104 @@
-import { MongoClient } from 'mongodb'
+import mongodb from '@/lib/mongodb'
 
-const MONGO_URI = process.env.MONGODB_URI || process.env.NEXT_PUBLIC_MONGODB_URI
-const DB_NAME = process.env.MONGODB_DB || process.env.DB_NAME || process.env.NEXT_PUBLIC_MONGODB_DB || 'pandc'
+const DB_NAME = process.env.MONGODB_DB || process.env.DB_NAME || 'pandc'
 
-async function getClient() {
-  if (!MONGO_URI) throw new Error('MONGODB_URI not set')
-  
-  const globalForMongo = globalThis;
-  if (globalForMongo._mongoClient && globalForMongo._mongoClient.topology) {
-    try {
-      const pingPromise = globalForMongo._mongoClient.db('admin').command({ ping: 1 })
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Ping timeout')), 5000)
-      )
-      await Promise.race([pingPromise, timeoutPromise])
-      return globalForMongo._mongoClient
-    } catch (e) {
-      try {
-        await globalForMongo._mongoClient.close()
-      } catch {}
-      globalForMongo._mongoClient = null
+async function computeSummary(coll, storeId) {
+  const match = {}
+  if (storeId) match.storeId = storeId
+
+  // Use aggregation pipeline to avoid loading all documents
+  const pipeline = [
+    { $match: match },
+    {
+      $facet: {
+        cancelled: [
+          {
+            $match: {
+              status: { $regex: '^CANCEL', $options: 'i' }
+            }
+          },
+          { $count: 'total' }
+        ],
+        revenue: [
+          {
+            $match: {
+              status: { $not: { $regex: '^CANCEL', $options: 'i' } }
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              totalAmount: { $sum: { $toDouble: '$total' } },
+              count: { $sum: 1 }
+            }
+          }
+        ]
+      }
     }
-  }
+  ]
+
+  const result = await coll.aggregate(pipeline).toArray()
+  const data = result[0] || {}
   
-  const c = new MongoClient(MONGO_URI, {
-    maxPoolSize: 10,
-    minPoolSize: 2,
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-    connectTimeoutMS: 10000,
-    retryWrites: true,
-  })
-  await c.connect()
-  globalForMongo._mongoClient = c
-  const visible = all.filter(o => !(o.status && String(o.status).toUpperCase().startsWith('CANCEL')))
-  const totalOrders = visible.length
-  const totalAmount = visible.reduce((s, o) => s + (Number(o.total) || 0), 0)
-  return { totalOrders, totalAmount, cancelled: cancelled.length }
+  const totalOrders = data.revenue?.[0]?.count || 0
+  const totalAmount = data.revenue?.[0]?.totalAmount || 0
+  const cancelledCount = data.cancelled?.[0]?.total || 0
+  
+  return { totalOrders, totalAmount, cancelled: cancelledCount }
 }
 
 export async function GET(req) {
+  let changeStream = null
+  let writer = null
+  
   try {
     const url = new URL(req.url)
     const storeId = url.searchParams.get('storeId') || undefined
 
-    const client = await getClient()
+    const client = await mongodb.getMongoClient?.() || (await (await import('@/lib/mongodb')).getMongoClient?.())
     const db = client.db(DB_NAME)
     const coll = db.collection('orders')
 
     const initial = await computeSummary(coll, storeId)
 
     const { readable, writable } = new TransformStream()
-    const writer = writable.getWriter()
+    writer = writable.getWriter()
 
-    // send initial event
-    await writer.ready
     const send = async (obj) => {
-      const payload = `event: summary\ndata: ${JSON.stringify(obj)}\n\n`
-      await writer.write(new TextEncoder().encode(payload))
+      try {
+        const payload = `event: summary\ndata: ${JSON.stringify(obj)}\n\n`
+        await writer.write(new TextEncoder().encode(payload))
+      } catch (e) {
+        console.error('Send error:', e)
+      }
     }
 
     await send({ type: 'initial', data: initial })
 
     // set up change stream
-    const pipeline = []
-    const changeStream = coll.watch(pipeline, { fullDocument: 'updateLookup' })
-
-    const onChange = async () => {
-      try {
-        const latest = await computeSummary(coll, storeId)
-        await send({ type: 'update', data: latest })
-      } catch (e) {
-        // ignore
-      }
-    }
+    const pipeline = storeId ? [{ $match: { storeId } }] : []
+    changeStream = coll.watch(pipeline, { fullDocument: 'updateLookup' })
 
     // iterate change stream in background
-    (async () => {
+    ;(async () => {
       try {
         for await (const change of changeStream) {
-          await onChange(change)
+          try {
+            const latest = await computeSummary(coll, storeId)
+            await send({ type: 'update', data: latest })
+          } catch (e) {
+            console.error('Compute summary error:', e)
+          }
         }
       } catch (e) {
-        // stream closed or error
+        if (!e.message.includes('Stream closed')) {
+          console.error('Change stream error:', e)
+        }
       } finally {
-        try { await writer.close() } catch (e) {}
+        try { 
+          if (changeStream) await changeStream.close()
+          if (writer) await writer.close() 
+        } catch (e) {}
       }
     })()
 
@@ -96,7 +110,12 @@ export async function GET(req) {
 
     return new Response(readable, { status: 200, headers })
   } catch (e) {
-    return new Response('error', { status: 500 })
+    console.error('Orders stream error:', e)
+    try { 
+      if (changeStream) await changeStream.close()
+      if (writer) await writer.close() 
+    } catch (err) {}
+    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { 'Content-Type': 'application/json' } })
   }
 }
 

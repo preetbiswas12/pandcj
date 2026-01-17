@@ -1,5 +1,7 @@
 import mongodb from '@/lib/mongodb';
 
+const DB_NAME = process.env.MONGODB_DB || 'pandc';
+
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -27,27 +29,8 @@ export async function POST(req) {
       );
     }
 
-    // Use the pooled connection from lib/mongodb.js
-    const { MongoClient } = await import('mongodb');
-    const MONGO_URI = process.env.MONGODB_URI || '';
-    const DB_NAME = process.env.MONGODB_DB || 'pandc';
-    
-    if (!MONGO_URI) throw new Error('MONGODB_URI not set');
-    
-    const globalForMongo = globalThis;
-    let client = globalForMongo._mongoClient;
-    
-    if (!client || !client.topology) {
-      client = new MongoClient(MONGO_URI, {
-        maxPoolSize: 10,
-        minPoolSize: 2,
-        serverSelectionTimeoutMS: 10000,
-        socketTimeoutMS: 45000,
-      });
-      await client.connect();
-      globalForMongo._mongoClient = client;
-    }
-    
+    // Use the global pooled connection
+    const client = await mongodb.getMongoClient?.() || (await (await import('@/lib/mongodb')).getMongoClient?.());
     const db = client.db(DB_NAME);
     const ratingsCollection = db.collection('ratings');
 
@@ -73,13 +56,13 @@ export async function POST(req) {
         message: 'Review submitted successfully',
         ratingId: result.insertedId,
       }),
-      { status: 201 }
+      { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
     console.error('Error creating rating:', err);
     return new Response(
       JSON.stringify({ error: 'Failed to submit review', details: err.message }),
-      { status: 500 }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
