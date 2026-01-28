@@ -56,27 +56,40 @@ const EditCategory = () => {
 
         try {
             setUploading(true)
-            const formDataUpload = new FormData()
-            formDataUpload.append('file', file)
+            
+            // Read file as base64
+            const reader = new FileReader()
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1]
+                
+                try {
+                    const res = await fetch('/api/admin/stores/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ data: base64, name: file.name })
+                    })
 
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: formDataUpload
-            })
-
-            if (res.ok) {
-                const data = await res.json()
-                const imageUrl = data.url
-                setFormData(prev => ({ ...prev, image: imageUrl }))
-                setImagePreview(imageUrl)
-                toast.success('Image uploaded successfully')
-            } else {
-                toast.error('Failed to upload image')
+                    if (res.ok) {
+                        const data = await res.json()
+                        const imageUrl = data.url || data.dataUrl
+                        setFormData(prev => ({ ...prev, image: imageUrl }))
+                        setImagePreview(imageUrl)
+                        toast.success('Image uploaded successfully')
+                    } else {
+                        toast.error('Failed to upload image')
+                    }
+                } catch (error) {
+                    console.error('Error uploading image:', error)
+                    toast.error('Failed to upload image')
+                } finally {
+                    setUploading(false)
+                }
             }
+            reader.readAsDataURL(file)
         } catch (error) {
-            console.error('Error uploading image:', error)
-            toast.error('Failed to upload image')
-        } finally {
+            console.error('Error reading file:', error)
+            toast.error('Failed to read file')
             setUploading(false)
         }
     }
