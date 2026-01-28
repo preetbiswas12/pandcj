@@ -2,10 +2,14 @@
 import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useAuth } from '@/app/providers/AuthProvider'
+import { Settings } from 'lucide-react'
 
 const CategoriesSection = () => {
     const [categories, setCategories] = useState([])
     const [loading, setLoading] = useState(true)
+    const { user } = useAuth()
+    const isAdmin = user?.role === 'ADMIN'
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -14,6 +18,8 @@ const CategoriesSection = () => {
                 if (res.ok) {
                     const data = await res.json()
                     setCategories(data.data || [])
+                } else {
+                    console.warn('Failed to fetch categories:', res.status)
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error)
@@ -25,15 +31,27 @@ const CategoriesSection = () => {
         fetchCategories()
     }, [])
 
-    if (loading || categories.length === 0) return null
+    if (categories.length === 0) return null
 
     return (
         <div className='py-8 sm:py-12 md:py-16 mx-3 sm:mx-6 md:mx-8'>
             <div className='max-w-7xl mx-auto'>
-                {/* Section Title */}
-                <h2 className='text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-8 text-center'>
-                    Shop by Category
-                </h2>
+                {/* Section Header with Title and Admin Link */}
+                <div className='flex items-center justify-between mb-8'>
+                    <h2 className='text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900'>
+                        Shop by Category
+                    </h2>
+                    {isAdmin && (
+                        <Link
+                            href='/admin/categories'
+                            className='flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-colors text-xs sm:text-sm'
+                            title='Manage Categories'
+                        >
+                            <Settings size={18} />
+                            <span className='max-sm:hidden'>Manage</span>
+                        </Link>
+                    )}
+                </div>
 
                 {/* Categories Grid */}
                 <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 sm:gap-6'>
