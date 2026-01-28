@@ -34,9 +34,21 @@ export async function POST(req) {
     let discountAmount = 0
     if (couponCode) {
       const coupon = await mongodb.coupon.findByCode(couponCode)
-      if (coupon && new Date(coupon.expiresAt) > new Date()) {
-        discountAmount = (total * coupon.discount) / 100
-        await mongodb.coupon.incrementUsage(couponCode)
+      if (coupon) {
+        // Check if expired (skip if noExpiry is true)
+        const isExpired = !coupon.noExpiry && coupon.expiresAt && new Date(coupon.expiresAt) < new Date()
+        
+        // Check if user is new (only if coupon requires new user)
+        let isNewUser = true
+        if (coupon.forNewUser) {
+          const userOrderHistory = await mongodb.order.findByUserId(uid, 100)
+          isNewUser = !userOrderHistory || userOrderHistory.length === 0
+        }
+
+        if (!isExpired && isNewUser) {
+          discountAmount = (total * coupon.discount) / 100
+          await mongodb.coupon.incrementUsage(couponCode)
+        }
       }
     }
 

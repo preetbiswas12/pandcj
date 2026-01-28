@@ -3,6 +3,7 @@ import mongodb from '@/lib/mongodb'
 export async function GET(req, { params }) {
   try {
     const { code } = await params
+    const userId = new URL(req.url).searchParams.get('userId')
 
     if (!code) {
       return new Response(JSON.stringify({ error: 'Coupon code is required' }), { status: 400 })
@@ -19,6 +20,18 @@ export async function GET(req, { params }) {
       return new Response(JSON.stringify({ valid: false, error: 'Coupon expired' }), { status: 400 })
     }
 
+    // Check if coupon is for new users only
+    if (coupon.forNewUser && userId) {
+      const userOrders = await mongodb.order.findByUserId(userId, 100)
+      if (userOrders && userOrders.length > 0) {
+        return new Response(JSON.stringify({ 
+          valid: false,
+          error: 'This coupon is only available for new users',
+          forNewUserOnly: true
+        }), { status: 400 })
+      }
+    }
+
     // Return valid coupon info (without sensitive data)
     return new Response(JSON.stringify({
       valid: true,
@@ -28,7 +41,8 @@ export async function GET(req, { params }) {
       expiresAt: coupon.expiresAt,
       noExpiry: coupon.noExpiry,
       minimumOrderAmount: coupon.minimumOrderAmount || 0,
-      applyToShipping: coupon.applyToShipping || false
+      applyToShipping: coupon.applyToShipping || false,
+      forNewUser: coupon.forNewUser || false
     }), { status: 200 })
   } catch (err) {
     console.error('GET /api/coupon/[code] failed:', err)

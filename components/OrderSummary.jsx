@@ -46,7 +46,13 @@ const OrderSummary = ({ totalPrice, items }) => {
             // Calculate total amount including shipping
             const currentTotal = totalPrice + shippingCharge;
             
-            const res = await fetch(`/api/coupon/validate?code=${couponCodeInput.trim()}&totalAmount=${currentTotal}`, {
+            // Build query string with userId if available
+            let queryString = `code=${couponCodeInput.trim()}&totalAmount=${currentTotal}`;
+            if (user?.id) {
+                queryString += `&userId=${user.id}`;
+            }
+            
+            const res = await fetch(`/api/coupon/validate?${queryString}`, {
                 method: 'GET',
             });
 
