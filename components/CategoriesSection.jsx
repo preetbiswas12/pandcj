@@ -58,7 +58,7 @@ const CategoriesSection = () => {
                     {categories.map((category) => (
                         <Link
                             key={category._id}
-                            href={`/shop?category=${encodeURIComponent(category.name)}`}
+                            href={category.link || `/shop?category=${encodeURIComponent(category.name)}`}
                             className='flex flex-col items-center gap-3 group cursor-pointer'
                         >
                             {/* Circular Image */}

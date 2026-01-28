@@ -9,7 +9,8 @@ const AddCategory = () => {
     const router = useRouter()
     const [formData, setFormData] = useState({
         name: '',
-        image: ''
+        image: '',
+        link: ''
     })
     const [imagePreview, setImagePreview] = useState(null)
     const [uploading, setUploading] = useState(false)
@@ -77,6 +78,11 @@ const AddCategory = () => {
             return
         }
 
+        if (!formData.link.trim()) {
+            toast.error('Category link is required')
+            return
+        }
+
         try {
             setSubmitting(true)
             const res = await fetch('/api/categories', {
@@ -121,7 +127,22 @@ const AddCategory = () => {
                             name="name"
                             value={formData.name}
                             onChange={handleInputChange}
-                            placeholder="e.g., Women's Jewelry, Men's Clothing"
+                        Category Link */}
+                    <div className='mb-8'>
+                        <label className='block text-sm font-semibold text-slate-900 mb-2'>
+                            Category Link *
+                        </label>
+                        <input
+                            type="text"
+                            name="link"
+                            value={formData.link}
+                            onChange={handleInputChange}
+                            placeholder="e.g., /shop?category=Jewelry"
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
+                        />
+                    </div>
+
+                    {/*     placeholder="e.g., Women's Jewelry, Men's Clothing"
                             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
                         />
                     </div>

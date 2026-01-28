@@ -10,9 +10,19 @@ const DB_NAME = process.env.MONGODB_DB || 'pandc'
  */
 export async function GET(request, { params }) {
     try {
-        const { id } = params
+        let { id } = params
+        
+        // Handle invalid ObjectId format - log and return clear error
+        if (!id || typeof id !== 'string' || id.length < 24) {
+            console.error('[Categories API] Invalid ID format:', id, 'Length:', id?.length)
+            return Response.json({
+                success: false,
+                message: 'Invalid category ID format'
+            }, { status: 400 })
+        }
 
         if (!ObjectId.isValid(id)) {
+            console.error('[Categories API] ObjectId validation failed for:', id)
             return Response.json({
                 success: false,
                 message: 'Invalid category ID'
@@ -107,9 +117,19 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
     try {
-        const { id } = params
+        let { id } = params
+        
+        // Validate ID format
+        if (!id || typeof id !== 'string' || id.length < 24) {
+            console.error('[Categories API DELETE] Invalid ID format:', id, 'Length:', id?.length)
+            return Response.json({
+                success: false,
+                message: 'Invalid category ID format - corrupted data. Please contact support.'
+            }, { status: 400 })
+        }
 
         if (!ObjectId.isValid(id)) {
+            console.error('[Categories API DELETE] ObjectId validation failed for:', id)
             return Response.json({
                 success: false,
                 message: 'Invalid category ID'
@@ -136,7 +156,7 @@ export async function DELETE(request, { params }) {
             message: 'Category deleted successfully'
         })
     } catch (error) {
-        console.error('[Categories API] Error:', error)
+        console.error('[Categories API DELETE] Error:', error)
         return Response.json({
             success: false,
             message: 'Failed to delete category',

@@ -39,12 +39,24 @@ const CategoriesAdmin = () => {
                 method: 'DELETE'
             })
 
+            const data = await res.json()
+
             if (res.ok) {
                 toast.success('Category deleted successfully')
                 setCategories(categories.filter(cat => cat._id !== id))
             } else {
-                const error = await res.json()
-                toast.error(error.message || 'Failed to delete category')
+                // If it's a corrupted ID error, offer to force delete from local state
+                if (data.message.includes('corrupted data')) {
+                    const forceDelete = window.confirm(
+                        'This category has corrupted data.\n\nDo you want to remove it from the list? (This will only remove it from display.)'
+                    )
+                    if (forceDelete) {
+                        setCategories(categories.filter(cat => cat._id !== id))
+                        toast.success('Category removed from list')
+                    }
+                } else {
+                    toast.error(data.message || 'Failed to delete category')
+                }
             }
         } catch (error) {
             console.error('Error deleting category:', error)
