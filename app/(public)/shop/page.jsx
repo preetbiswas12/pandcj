@@ -29,7 +29,7 @@ function ShopContent() {
 
     // Filter and sort products
     useEffect(() => {
-        let result = products
+        let result = [...products] // Create a copy to avoid mutating Redux state
 
         // Filter by search
         if (search) {
@@ -45,7 +45,7 @@ function ShopContent() {
             )
         }
 
-        // Sort products
+        // Sort products (now safe because we have a copy)
         if (selectedSort === 'price_asc') {
             result.sort((a, b) => a.price - b.price)
         } else if (selectedSort === 'price_desc') {
