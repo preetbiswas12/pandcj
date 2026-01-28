@@ -26,6 +26,7 @@ function ShopContent() {
     const [selectedSort, setSelectedSort] = useState('newest')
     const [showMobileFilters, setShowMobileFilters] = useState(false)
     const [filteredProducts, setFilteredProducts] = useState([])
+    const [priceRange, setPriceRange] = useState([0, 10000])
 
     // Filter and sort products
     useEffect(() => {
@@ -45,6 +46,11 @@ function ShopContent() {
             )
         }
 
+        // Filter by price range
+        result = result.filter(product =>
+            product.price >= priceRange[0] && product.price <= priceRange[1]
+        )
+
         // Sort products (now safe because we have a copy)
         if (selectedSort === 'price_asc') {
             result.sort((a, b) => a.price - b.price)
@@ -58,7 +64,7 @@ function ShopContent() {
         }
 
         setFilteredProducts(result)
-    }, [products, search, selectedCategory, selectedSort])
+    }, [products, search, selectedCategory, selectedSort, priceRange])
 
     const handleCategoryChange = (category) => {
         setSelectedCategory(category)
@@ -72,6 +78,7 @@ function ShopContent() {
     const handleResetFilters = () => {
         setSelectedCategory('')
         setSelectedSort('newest')
+        setPriceRange([0, 10000])
     }
 
     return (
@@ -138,8 +145,52 @@ function ShopContent() {
                                 </div>
                             </div>
 
+                            {/* Price Range */}
+                            <div className="mb-6">
+                                <h4 className="font-medium text-slate-700 mb-4 text-sm">Price Range</h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-600 mb-2">Min Price: ₹{priceRange[0]}</label>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="10000"
+                                            value={priceRange[0]}
+                                            onChange={(e) => {
+                                                const newMin = parseInt(e.target.value);
+                                                if (newMin <= priceRange[1]) {
+                                                    setPriceRange([newMin, priceRange[1]]);
+                                                }
+                                            }}
+                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-600 mb-2">Max Price: ₹{priceRange[1]}</label>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="10000"
+                                            value={priceRange[1]}
+                                            onChange={(e) => {
+                                                const newMax = parseInt(e.target.value);
+                                                if (newMax >= priceRange[0]) {
+                                                    setPriceRange([priceRange[0], newMax]);
+                                                }
+                                            }}
+                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                                        />
+                                    </div>
+                                    <div className="pt-2 border-t border-slate-100">
+                                        <p className="text-sm font-semibold text-slate-700">
+                                            ₹{priceRange[0]} - ₹{priceRange[1]}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Reset Button */}
-                            {(selectedCategory || selectedSort !== 'newest') && (
+                            {(selectedCategory || selectedSort !== 'newest' || priceRange[0] !== 0 || priceRange[1] !== 10000) && (
                                 <button
                                     onClick={handleResetFilters}
                                     className="w-full py-2 px-3 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition"
@@ -180,7 +231,7 @@ function ShopContent() {
                         {showMobileFilters && (
                             <div className="md:hidden mb-4 bg-white rounded-lg border border-slate-200 p-4">
                                 <h4 className="font-medium text-slate-700 mb-3">Categories</h4>
-                                <div className="space-y-2 mb-4">
+                                <div className="space-y-2 mb-6 pb-6 border-b border-slate-200">
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="radio"
@@ -205,6 +256,50 @@ function ShopContent() {
                                             <span className="text-sm text-slate-600">{cat}</span>
                                         </label>
                                     ))}
+                                </div>
+
+                                {/* Mobile Price Range */}
+                                <div className="mb-6">
+                                    <h4 className="font-medium text-slate-700 mb-4 text-sm">Price Range</h4>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs text-slate-600 mb-2">Min Price: ₹{priceRange[0]}</label>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="10000"
+                                                value={priceRange[0]}
+                                                onChange={(e) => {
+                                                    const newMin = parseInt(e.target.value);
+                                                    if (newMin <= priceRange[1]) {
+                                                        setPriceRange([newMin, priceRange[1]]);
+                                                    }
+                                                }}
+                                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-600 mb-2">Max Price: ₹{priceRange[1]}</label>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="10000"
+                                                value={priceRange[1]}
+                                                onChange={(e) => {
+                                                    const newMax = parseInt(e.target.value);
+                                                    if (newMax >= priceRange[0]) {
+                                                        setPriceRange([priceRange[0], newMax]);
+                                                    }
+                                                }}
+                                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                                            />
+                                        </div>
+                                        <div className="pt-2 border-t border-slate-100">
+                                            <p className="text-sm font-semibold text-slate-700">
+                                                ₹{priceRange[0]} - ₹{priceRange[1]}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {selectedCategory && (
