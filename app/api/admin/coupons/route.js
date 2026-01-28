@@ -13,7 +13,7 @@ export async function GET() {
 export async function POST(req) {
   try {
     const body = await req.json()
-    const { code, description, discount, forNewUser, forMember, isPublic, expiresAt } = body
+    const { code, description, discount, forNewUser, forMember, isPublic, applyToShipping, expiresAt, noExpiry, minimumOrderAmount } = body
 
     if (!code || discount === undefined) {
       return new Response(JSON.stringify({ error: 'code and discount required' }), { status: 400 })
@@ -32,7 +32,10 @@ export async function POST(req) {
       forNewUser: !!forNewUser,
       forMember: !!forMember,
       isPublic: !!isPublic,
-      expiresAt: expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      applyToShipping: !!applyToShipping,
+      noExpiry: !!noExpiry,
+      minimumOrderAmount: Number(minimumOrderAmount) || 0,
+      expiresAt: noExpiry ? null : (expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()),
       usedCount: 0,
     })
 

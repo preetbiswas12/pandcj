@@ -14,8 +14,8 @@ export async function GET(req, { params }) {
       return new Response(JSON.stringify({ valid: false, error: 'Coupon not found' }), { status: 404 })
     }
 
-    // Check if expired
-    if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+    // Check if expired (skip if noExpiry is true)
+    if (!coupon.noExpiry && coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
       return new Response(JSON.stringify({ valid: false, error: 'Coupon expired' }), { status: 400 })
     }
 
@@ -26,6 +26,9 @@ export async function GET(req, { params }) {
       discount: coupon.discount,
       description: coupon.description,
       expiresAt: coupon.expiresAt,
+      noExpiry: coupon.noExpiry,
+      minimumOrderAmount: coupon.minimumOrderAmount || 0,
+      applyToShipping: coupon.applyToShipping || false
     }), { status: 200 })
   } catch (err) {
     console.error('GET /api/coupon/[code] failed:', err)

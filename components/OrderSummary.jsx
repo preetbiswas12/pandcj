@@ -43,7 +43,10 @@ const OrderSummary = ({ totalPrice, items }) => {
         }
 
         try {
-            const res = await fetch(`/api/coupon/${couponCodeInput.trim()}`, {
+            // Calculate total amount including shipping
+            const currentTotal = totalPrice + shippingCharge;
+            
+            const res = await fetch(`/api/coupon/validate?code=${couponCodeInput.trim()}&totalAmount=${currentTotal}`, {
                 method: 'GET',
             });
 
@@ -56,6 +59,11 @@ const OrderSummary = ({ totalPrice, items }) => {
             
             if (!couponData.valid) {
                 throw new Error(couponData.error || 'Invalid or expired coupon');
+            }
+
+            // Check minimum order amount
+            if (couponData.minimumOrderAmount && currentTotal < couponData.minimumOrderAmount) {
+                throw new Error(`This coupon requires a minimum order amount of ${currency}${couponData.minimumOrderAmount}. Current amount: ${currency}${currentTotal}`);
             }
 
             setCoupon(couponData);

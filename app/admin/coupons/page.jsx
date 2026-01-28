@@ -16,7 +16,9 @@ export default function AdminCoupons() {
         forMember: false,
         isPublic: false,
         applyToShipping: false,
-        expiresAt: new Date()
+        expiresAt: new Date(),
+        noExpiry: false,
+        minimumOrderAmount: 0
     })
 
     const fetchCoupons = async () => {
@@ -39,14 +41,16 @@ export default function AdminCoupons() {
                 forMember: !!newCoupon.forMember,
                 isPublic: !!newCoupon.isPublic,
                 applyToShipping: !!newCoupon.applyToShipping,
-                expiresAt: typeof newCoupon.expiresAt === 'string' ? newCoupon.expiresAt : new Date(newCoupon.expiresAt).toISOString()
+                noExpiry: !!newCoupon.noExpiry,
+                minimumOrderAmount: Number(newCoupon.minimumOrderAmount) || 0,
+                expiresAt: newCoupon.noExpiry ? null : (typeof newCoupon.expiresAt === 'string' ? newCoupon.expiresAt : new Date(newCoupon.expiresAt).toISOString())
             }
             const res = await fetch('/api/admin/coupons', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
             if (res.status === 409) { toast.error('Coupon code already exists'); return }
             if (!res.ok) throw new Error('Add failed')
             const created = await res.json()
             setCoupons(prev => [created, ...prev])
-            setNewCoupon({ code: '', description: '', discount: '', forNewUser: false, forMember: false, isPublic: false, applyToShipping: false, expiresAt: new Date() })
+            setNewCoupon({ code: '', description: '', discount: '', forNewUser: false, forMember: false, isPublic: false, applyToShipping: false, expiresAt: new Date(), noExpiry: false, minimumOrderAmount: 0 })
             toast.success('Coupon added')
         } catch (e) { console.error(e); toast.error('Could not add coupon') }
     }
@@ -95,14 +99,31 @@ export default function AdminCoupons() {
                     name="description" value={newCoupon.description} onChange={handleChange} required
                 />
 
+                <div className="flex gap-2 max-sm:flex-col mt-2">
+                    <input type="number" placeholder="Minimum Order Amount (₹)" min={0} step={0.01} className="w-full mt-2 p-2 border border-slate-200 outline-slate-400 rounded-md"
+                        name="minimumOrderAmount" value={newCoupon.minimumOrderAmount} onChange={handleChange}
+                    />
+                </div>
+
                 <label>
                     <p className="mt-3">Coupon Expiry Date</p>
                     <input type="date" placeholder="Coupon Expires At" className="w-full mt-1 p-2 border border-slate-200 outline-slate-400 rounded-md"
-                        name="expiresAt" value={format(newCoupon.expiresAt, 'yyyy-MM-dd')} onChange={handleChange}
+                        name="expiresAt" value={format(newCoupon.expiresAt, 'yyyy-MM-dd')} onChange={handleChange} disabled={newCoupon.noExpiry}
                     />
                 </label>
 
                 <div className="mt-5">
+                    <div className="flex gap-2 mt-3">
+                        <label className="relative inline-flex items-center cursor-pointer text-gray-900 gap-3">
+                            <input type="checkbox" className="sr-only peer"
+                                name="noExpiry" checked={newCoupon.noExpiry}
+                                onChange={(e) => setNewCoupon({ ...newCoupon, noExpiry: e.target.checked })}
+                            />
+                            <div className="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-yellow-600 transition-colors duration-200"></div>
+                            <span className="dot absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></span>
+                        </label>
+                        <p>No Expiry Date</p>
+                    </div>
                     <div className="flex gap-2 mt-3">
                         <label className="relative inline-flex items-center cursor-pointer text-gray-900 gap-3">
                             <input type="checkbox" className="sr-only peer"
@@ -150,6 +171,7 @@ export default function AdminCoupons() {
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">Code</th>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">Description</th>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">Discount</th>
+                                <th className="py-3 px-4 text-left font-semibold text-slate-600">Min Order</th>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">Expires At</th>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">New User</th>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">For Member</th>
@@ -163,7 +185,8 @@ export default function AdminCoupons() {
                                     <td className="py-3 px-4 font-medium text-slate-800">{coupon.code}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.description}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.discount}%</td>
-                                    <td className="py-3 px-4 text-slate-800">{format(coupon.expiresAt, 'yyyy-MM-dd')}</td>
+                                    <td className="py-3 px-4 text-slate-800">₹{coupon.minimumOrderAmount || 0}</td>
+                                    <td className="py-3 px-4 text-slate-800">{coupon.noExpiry ? 'Never' : format(coupon.expiresAt, 'yyyy-MM-dd')}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.forNewUser ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.forMember ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.applyToShipping ? 'Yes' : 'No'}</td>
