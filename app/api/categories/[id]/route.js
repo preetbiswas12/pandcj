@@ -154,6 +154,12 @@ export async function DELETE(request, { params }) {
         return Response.json({
             success: true,
             message: 'Category deleted successfully'
+        }, {
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
         })
     } catch (error) {
         console.error('[Categories API DELETE] Error:', error)
