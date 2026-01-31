@@ -57,7 +57,7 @@ const Navbar = () => {
                         <span className="text-2xl font-semibold"><span className="text-yellow-600">P&C</span><span className="text-slate-500">Jewellery</span></span>
                     </Link>
 
-                    {/* Desktop Menu */}}
+                    {/* Desktop Menu */}
                     <div className={`hidden sm:flex items-center gap-4 lg:gap-8 ${scrolled ? 'text-slate-600' : 'text-white'}`}>
                         <Link href="/">Home</Link>
                         <Link href="/shop">Shop</Link> 
