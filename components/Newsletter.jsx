@@ -45,18 +45,41 @@ const Newsletter = () => {
     }
 
     return (
-        <div className='flex flex-col items-center mx-4 my-15'>
-            <Title title="Join Our Family" description="Subscribe to get exclusive deals, new arrivals, and insider updates delivered straight to your inbox on release." visibleButton={false} />
-            <form onSubmit={handleSubmit} className='flex bg-slate-100 text-sm p-1 rounded-full w-full max-w-xl my-10 border-2 border-white ring ring-slate-200'>
-                <label htmlFor='newsletter-email' className='sr-only'>Email address for newsletter</label>
-                <input id='newsletter-email' value={email} onChange={(e) => setEmail(e.target.value)} className='flex-1 pl-5 outline-none bg-transparent' type="email" placeholder='Enter your email address' aria-label='Email address for newsletter' />
-                <button disabled={loading} type="submit" className='font-medium bg-yellow-500 text-white px-7 py-3 rounded-full hover:scale-103 active:scale-95 transition' aria-label={loading ? 'Sending newsletter subscription' : 'Subscribe to newsletter'}>
-                    {loading ? 'Sending...' : 'Get Updates'}
-                </button>
-            </form>
-            {status && (
-                <p className={`text-sm ${status.type === 'error' ? 'text-red-500' : 'text-yellow-600'}`}>{status.message}</p>
-            )}
+        <div className='relative overflow-hidden'>
+            {/* Background gradient */}
+            <div className='absolute inset-0 bg-gradient-to-br from-yellow-50 via-white to-amber-50'></div>
+            
+            <div className='relative flex flex-col items-center mx-4 sm:mx-6 my-12 sm:my-16 py-10 sm:py-14'>
+                <div className='text-center mb-6'>
+                    <h2 className='text-2xl sm:text-3xl font-bold text-slate-800 mb-3'>Join Our Family</h2>
+                    <p className='text-sm sm:text-base text-slate-600 max-w-md mx-auto px-4'>Subscribe to get exclusive deals, new arrivals, and insider updates delivered straight to your inbox.</p>
+                </div>
+                
+                <form onSubmit={handleSubmit} className='flex flex-col sm:flex-row bg-white text-sm p-2 rounded-2xl sm:rounded-full w-full max-w-xl shadow-lg border border-slate-100'>
+                    <label htmlFor='newsletter-email' className='sr-only'>Email address for newsletter</label>
+                    <input 
+                        id='newsletter-email' 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)} 
+                        className='flex-1 px-5 py-3 sm:py-0 outline-none bg-transparent text-slate-700 placeholder-slate-400 text-center sm:text-left' 
+                        type="email" 
+                        placeholder='Enter your email address' 
+                        aria-label='Email address for newsletter' 
+                    />
+                    <button 
+                        disabled={loading} 
+                        type="submit" 
+                        className='font-semibold bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-8 py-3.5 rounded-xl sm:rounded-full hover:from-yellow-600 hover:to-amber-600 active:scale-95 transition-all shadow-md hover:shadow-lg disabled:opacity-50' 
+                        aria-label={loading ? 'Sending newsletter subscription' : 'Subscribe to newsletter'}
+                    >
+                        {loading ? 'Sending...' : 'Get Updates'}
+                    </button>
+                </form>
+                
+                {status && (
+                    <p className={`mt-4 text-sm font-medium ${status.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>{status.message}</p>
+                )}
+            </div>
         </div>
     )
 }

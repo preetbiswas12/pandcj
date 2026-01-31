@@ -112,35 +112,29 @@ const Hero = ({ initial = null }) => {
                 </div>
                     <div className='flex flex-col md:flex-row xl:flex-col gap-3 sm:gap-5 w-full xl:max-w-sm text-xs sm:text-sm text-black'>
                     <div
-                        className='flex-1 flex flex-row sm:flex-row md:flex-col xl:flex-row xl:items-center xl:justify-between w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 px-4 sm:px-8 group'
-                        style={
-                            topRight.bgColor
-                                ? { backgroundColor: topRight.bgColor }
-                                : topRight.bgImage
-                                    ? { backgroundImage: `url(${topRight.bgImage})`, backgroundSize: 'cover' }
-                                    : { backgroundColor: '#FED7AA' }
-                        }
+                        className='flex-1 flex flex-row sm:flex-row md:flex-col xl:flex-row xl:items-center xl:justify-between w-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 px-5 sm:px-8 group shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1'
+                        style={{
+                            backgroundColor: topRight.bgColor || '#FED7AA',
+                            ...(topRight.bgImage ? { backgroundImage: `url(${topRight.bgImage})`, backgroundSize: 'cover' } : {})
+                        }}
                     >
-                        <Image className='w-24 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last' src={topRight.image} alt={topRight.title || "Featured item"} />
-                        <div className='mt-4 sm:mt-4 md:mt-4 xl:mt-0 ml-4 sm:ml-0'>
-                            <p className='text-2xl sm:text-2xl md:text-3xl font-medium text-black max-w-40'>{topRight.title}</p>
-                            <p className='flex items-center gap-1 mt-2 sm:mt-4'><a href={topRight.link} className='flex items-center gap-1 text-black text-sm sm:text-sm'>View more <ArrowRightIcon className='group-hover:ml-2 transition-all' size={16} /></a> </p>
+                        <Image className='w-20 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last drop-shadow-lg' src={topRight.image} alt={topRight.title || "Featured item"} />
+                        <div className='mt-0 sm:mt-4 md:mt-4 xl:mt-0 ml-3 sm:ml-0 flex flex-col justify-center'>
+                            <p className='text-xl sm:text-2xl md:text-3xl font-semibold text-slate-800 max-w-40 leading-tight'>{topRight.title}</p>
+                            <p className='flex items-center gap-1 mt-3 sm:mt-4'><a href={topRight.link} className='flex items-center gap-1 text-slate-700 text-sm sm:text-sm font-medium hover:text-yellow-600 transition-colors'>View more <ArrowRightIcon className='group-hover:translate-x-1 transition-transform' size={16} /></a></p>
                         </div>
                     </div>
                     <div
-                        className='flex-1 flex flex-row sm:flex-row md:flex-col xl:flex-row xl:items-center xl:justify-between w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 px-4 sm:px-8 group'
-                        style={
-                            bottomRight.bgColor
-                                ? { backgroundColor: bottomRight.bgColor }
-                                : bottomRight.bgImage
-                                    ? { backgroundImage: `url(${bottomRight.bgImage})`, backgroundSize: 'cover' }
-                                    : { backgroundColor: '#DBEAFE' }
-                        }
+                        className='flex-1 flex flex-row sm:flex-row md:flex-col xl:flex-row xl:items-center xl:justify-between w-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 px-5 sm:px-8 group shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1'
+                        style={{
+                            backgroundColor: bottomRight.bgColor || '#DBEAFE',
+                            ...(bottomRight.bgImage ? { backgroundImage: `url(${bottomRight.bgImage})`, backgroundSize: 'cover' } : {})
+                        }}
                     >
-                        <Image className='w-24 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last' src={bottomRight.image} alt={bottomRight.title || "Featured item"} />
-                        <div className='mt-4 sm:mt-4 md:mt-4 xl:mt-0 ml-4 sm:ml-0'>
-                            <p className='text-2xl sm:text-2xl md:text-3xl font-medium text-black max-w-40'>{bottomRight.title}</p>
-                            <p className='flex items-center gap-1 mt-2 sm:mt-4'><a href={bottomRight.link} className='flex items-center gap-1 text-black text-sm sm:text-sm'>View more <ArrowRightIcon className='group-hover:ml-2 transition-all' size={16} /></a> </p>
+                        <Image className='w-20 sm:w-35 md:w-32 xl:w-24 order-first md:order-first xl:order-last drop-shadow-lg' src={bottomRight.image} alt={bottomRight.title || "Featured item"} />
+                        <div className='mt-0 sm:mt-4 md:mt-4 xl:mt-0 ml-3 sm:ml-0 flex flex-col justify-center'>
+                            <p className='text-xl sm:text-2xl md:text-3xl font-semibold text-slate-800 max-w-40 leading-tight'>{bottomRight.title}</p>
+                            <p className='flex items-center gap-1 mt-3 sm:mt-4'><a href={bottomRight.link} className='flex items-center gap-1 text-slate-700 text-sm sm:text-sm font-medium hover:text-yellow-600 transition-colors'>View more <ArrowRightIcon className='group-hover:translate-x-1 transition-transform' size={16} /></a></p>
                         </div>
                     </div>
                 </div>
