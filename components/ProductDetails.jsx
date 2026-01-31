@@ -132,6 +132,9 @@ const ProductDetails = ({ product = {} }) => {
             </div>
             <div className="flex-1">
                 <h1 className="text-2xl sm:text-3xl font-semibold text-slate-800">{product.name}</h1>
+                {product.itemNumber && (
+                    <p className="text-sm text-slate-500 mt-1">Item No: {product.itemNumber}</p>
+                )}
                 <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 mt-2'>
                     <div className='flex items-center gap-2'>
                         {Array(5).fill('').map((_, index) => (

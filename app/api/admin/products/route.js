@@ -16,7 +16,7 @@ export async function POST(req) {
     }, REQUEST_TIMEOUT)
     
     const body = await req.json()
-    const { name, description, mrp, price, images, category, stock, storeId } = body
+    const { name, description, mrp, price, images, category, stock, storeId, itemNumber } = body
 
     console.log('[POST /api/admin/products] Validating input...')
     if (!name || !description || !images || !Array.isArray(images) || images.length === 0) {
@@ -53,6 +53,7 @@ export async function POST(req) {
       stock: stock || 'in_stock',
       inStock: stock !== 'out_of_stock',
       storeId,
+      itemNumber: itemNumber || '',
     })
 
     clearTimeout(timeoutId)

@@ -19,7 +19,8 @@ export default function StoreAddProduct() {
         mrp: 0,
         price: 0,
         category: "",
-        stock: "in_stock"
+        stock: "in_stock",
+        itemNumber: ""
     })
     const [loading, setLoading] = useState(false)
 
@@ -177,7 +178,8 @@ export default function StoreAddProduct() {
                 images: uploadedUrls,
                 category: productInfo.category,
                 stock: productInfo.stock,
-                storeId: storeId
+                storeId: storeId,
+                itemNumber: productInfo.itemNumber
             }
 
             console.log('[AddProduct] Sending payload:', payload)
@@ -196,7 +198,7 @@ export default function StoreAddProduct() {
             toast.dismiss(loadingToast)
             toast.success('Product added successfully!')
             // reset form
-            setProductInfo({ name: '', description: '', mrp: 0, price: 0, category: '', stock: 'in_stock' })
+            setProductInfo({ name: '', description: '', mrp: 0, price: 0, category: '', stock: 'in_stock', itemNumber: '' })
             setImages({ 1: { file: null, preview: null }, 2: { file: null, preview: null }, 3: { file: null, preview: null }, 4: { file: null, preview: null } })
         } catch (err) {
             console.error('[AddProduct] Error:', err)
@@ -237,6 +239,11 @@ export default function StoreAddProduct() {
             <label htmlFor="" className="flex flex-col gap-2 my-6">
                 Name
                 <input type="text" name="name" onChange={onChangeHandler} value={productInfo.name} placeholder="Enter product name" className="w-full sm:max-w-sm p-2 px-4 outline-none border border-slate-200 rounded text-sm" required />
+            </label>
+
+            <label htmlFor="" className="flex flex-col gap-2 my-6">
+                Item Number
+                <input type="text" name="itemNumber" onChange={onChangeHandler} value={productInfo.itemNumber} placeholder="Enter item number (e.g., PN-001)" className="w-full sm:max-w-sm p-2 px-4 outline-none border border-slate-200 rounded text-sm" />
             </label>
 
             <label htmlFor="" className="flex flex-col gap-2 my-6">

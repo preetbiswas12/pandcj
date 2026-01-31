@@ -19,7 +19,8 @@ export default function StoreEditProduct() {
         price: 0,
         category: "",
         stock: "in_stock",
-        images: []
+        images: [],
+        itemNumber: ""
     })
     const [loading, setLoading] = useState(false)
     const [initialLoading, setInitialLoading] = useState(true)
@@ -40,7 +41,8 @@ export default function StoreEditProduct() {
                     price: product.price || 0,
                     category: product.category || "",
                     stock: product.stock || "in_stock",
-                    images: product.images || []
+                    images: product.images || [],
+                    itemNumber: product.itemNumber || ""
                 })
                 // Set preview images
                 if (product.images && product.images.length > 0) {
@@ -118,7 +120,8 @@ export default function StoreEditProduct() {
                 images: uploadedUrls,
                 category: productInfo.category,
                 stock: productInfo.stock,
-                storeId: 'default-store'
+                storeId: 'default-store',
+                itemNumber: productInfo.itemNumber
             }
 
             const controller = new AbortController()
@@ -168,6 +171,11 @@ export default function StoreEditProduct() {
             <label htmlFor="" className="flex flex-col gap-2 my-6 ">
                 Name
                 <input type="text" name="name" onChange={onChangeHandler} value={productInfo.name} placeholder="Enter product name" className="w-full max-w-sm p-2 px-4 outline-none border border-slate-200 rounded" required />
+            </label>
+
+            <label htmlFor="" className="flex flex-col gap-2 my-6 ">
+                Item Number
+                <input type="text" name="itemNumber" onChange={onChangeHandler} value={productInfo.itemNumber} placeholder="Enter item number (e.g., PN-001)" className="w-full max-w-sm p-2 px-4 outline-none border border-slate-200 rounded" />
             </label>
 
             <label htmlFor="" className="flex flex-col gap-2 my-6 ">

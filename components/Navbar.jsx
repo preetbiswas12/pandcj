@@ -46,11 +46,18 @@ const Navbar = () => {
             <div className="mx-6">
                 <div className="flex items-center justify-between max-w-7xl mx-auto py-4 transition-all">
 
-                    <Link href="/" className="relative text-4xl font-semibold flex items-center gap-3">
-                        <span className="text-2xl font-semibold"><span className="text-yellow-600">P&C</span><span className="text-slate-500">Jewellery</span><span className="text-yellow-600 text-4xl leading-0">.</span></span>
+                    {/* Mobile Menu Button - Left Side */}
+                    <div className="sm:hidden">
+                        <button aria-label="Open menu" onClick={() => setMobileOpen(true)} className={`p-2 rounded ${scrolled ? 'bg-white/20 text-slate-700' : 'text-white'}`}>
+                            <Menu />
+                        </button>
+                    </div>
+
+                    <Link href="/" className="relative text-4xl font-semibold flex items-center gap-3 sm:flex-none flex-1 justify-center sm:justify-start">
+                        <span className="text-2xl font-semibold"><span className="text-yellow-600">P&C</span><span className="text-slate-500">Jewellery</span></span>
                     </Link>
 
-                    {/* Desktop Menu */}
+                    {/* Desktop Menu */}}
                     <div className={`hidden sm:flex items-center gap-4 lg:gap-8 ${scrolled ? 'text-slate-600' : 'text-white'}`}>
                         <Link href="/">Home</Link>
                         <Link href="/shop">Shop</Link> 
@@ -93,12 +100,8 @@ const Navbar = () => {
 
                     </div>
 
-                    {/* Mobile Menu Button */}
-                    <div className="sm:hidden">
-                        <button aria-label="Open menu" onClick={() => setMobileOpen(true)} className={`p-2 rounded ${scrolled ? 'bg-white/20 text-slate-700' : 'text-white'}`}>
-                            <Menu />
-                        </button>
-                    </div>
+                    {/* Empty div for right spacing on mobile */}
+                    <div className="sm:hidden w-10"></div>
                 </div>
             </div>
             <hr className={`${scrolled ? 'border-gray-300' : 'border-transparent'} mt-0`} />
@@ -107,8 +110,8 @@ const Navbar = () => {
             {mobileOpen && (
                 <div className="fixed inset-0 z-50 bg-white sm:hidden text-slate-700">
                     <div className="flex items-center justify-between p-4 border-b">
-                        <Link href="/" className="flex items-center gap-3">
-                            <span className="text-2xl font-semibold">P&C<span className="text-yellow-600">Jewellery</span></span>
+                        <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-3">
+                            <span className="text-2xl font-semibold"><span className="text-yellow-600">P&C</span><span className="text-slate-500">Jewellery</span></span>
                         </Link>
                         <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="p-2">
                             <X />
