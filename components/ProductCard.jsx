@@ -73,9 +73,9 @@ const ProductCard = ({ product, rating = 0 }) => {
 
     return (
         <>
-            <div className='group max-xl:mx-auto relative'>
-                <Link href={`/product/${generateProductSlug(product.name, product.id)}`} className='block rounded-md hover:shadow-md transition'>
-                    <div className='bg-[#F5F5F5] h-40 sm:h-56 md:h-68 rounded-lg flex items-center justify-center overflow-hidden relative'>
+            <div className='group max-xl:mx-auto relative h-full'>
+                <Link href={`/product/${generateProductSlug(product.name, product.id)}`} className='rounded-md hover:shadow-md transition h-full flex flex-col'>
+                    <div className='bg-[#F5F5F5] h-40 sm:h-56 md:h-68 rounded-lg flex items-center justify-center overflow-hidden relative flex-shrink-0'>
                         {product?.images && product.images.length > 0 ? (
                             <Image 
                                 width={500} 
@@ -87,24 +87,26 @@ const ProductCard = ({ product, rating = 0 }) => {
                         ) : (
                             <div className='w-full h-full flex items-center justify-center text-slate-400 text-xs text-center'>No Image</div>
                         )}
+                        
+                        {/* Out of Stock Overlay with Blurred Image */}
+                        {isOutOfStock && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
+                                <span className="bg-rose-600 text-white px-3 sm:px-4 py-2 rounded-md font-bold text-xs sm:text-sm">
+                                    Out of Stock
+                                </span>
+                            </div>
+                        )}
                     </div>
                     
-                    {/* Out of Stock Overlay with Blurred Image */}
-                    {isOutOfStock && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
-                            <span className="bg-rose-600 text-white px-3 sm:px-4 py-2 rounded-md font-bold text-xs sm:text-sm">
-                                Out of Stock
-                            </span>
-                        </div>
-                    )}
-                    <div className='pt-2 px-1 sm:px-0'>
-                        <h3 className='font-medium text-xs sm:text-sm md:text-base text-slate-800 line-clamp-2 leading-snug'>{product.name}</h3>
+                    {/* Product Info - Fixed Height Container */}
+                    <div className='pt-2 pb-12 px-1 sm:px-0 flex flex-col flex-grow'>
+                        <h3 className='font-medium text-xs sm:text-sm md:text-base text-slate-800 line-clamp-2 leading-snug h-8 sm:h-10 md:h-12'>{product.name}</h3>
                         <div className='flex gap-0.5 mt-1.5 mb-1.5'>
                             {Array(5).fill('').map((_, index) => (
                                 <StarIcon key={index} size={14} className='sm:size-[16px] md:size-[18px] shrink-0' fill={rating >= index + 1 ? "#00C950" : "#D1D5DB"} stroke={rating >= index + 1 ? "#00C950" : "#D1D5DB"} />
                             ))}
                         </div>
-                        <div className='flex items-center gap-2'>
+                        <div className='flex items-center gap-2 flex-wrap'>
                             <p className='font-semibold text-xs sm:text-sm md:text-base text-slate-900'>{currency}{product.price}</p>
                             {originalPrice && originalPrice > product.price && (
                                 <p className='text-xs sm:text-sm text-slate-400 line-through'>{currency}{originalPrice}</p>
@@ -113,7 +115,6 @@ const ProductCard = ({ product, rating = 0 }) => {
                                 <span className='text-xs sm:text-sm font-medium text-green-600'>Save {discountPercent}%</span>
                             )}
                         </div>
-                        {/* Removed Buy Now button - using Add to Cart button instead */}
                     </div>
                 </Link>
 
