@@ -42,7 +42,9 @@ const CategoriesAdmin = () => {
         setDeleteConfirm({ open: false, id: null })
 
         try {
-            const res = await fetch(`/api/categories/${id}`, {
+            // Encode the ID in case it contains special characters
+            const encodedId = encodeURIComponent(id)
+            const res = await fetch(`/api/categories/${encodedId}`, {
                 method: 'DELETE'
             })
 
@@ -52,12 +54,7 @@ const CategoriesAdmin = () => {
                 toast.success('Category deleted successfully')
                 setCategories(categories.filter(cat => cat._id !== id))
             } else {
-                // If it's a corrupted ID error, offer to force delete from local state
-                if (data.message.includes('corrupted data')) {
-                    toast.error(data.message || 'Failed to delete category')
-                } else {
-                    toast.error(data.message || 'Failed to delete category')
-                }
+                toast.error(data.message || 'Failed to delete category')
             }
         } catch (error) {
             console.error('Error deleting category:', error)

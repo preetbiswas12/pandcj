@@ -14,7 +14,9 @@ const CategoriesSection = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const res = await fetch('/api/categories')
+                const res = await fetch('/api/categories', {
+                    cache: 'no-store'
+                })
                 if (res.ok) {
                     const data = await res.json()
                     setCategories(data.data || [])
@@ -29,50 +31,52 @@ const CategoriesSection = () => {
         }
 
         fetchCategories()
+        
+        // Refresh categories every 5 minutes to catch any deletions
+        const interval = setInterval(fetchCategories, 5 * 60 * 1000)
+        
+        return () => clearInterval(interval)
     }, [])
 
     if (categories.length === 0) return null
 
     return (
-        <div className='py-8 sm:py-12 md:py-16 mx-3 sm:mx-6 md:mx-8'>
+        <div className='py-4 sm:py-6 mx-3 sm:mx-6 md:mx-8'>
             <div className='max-w-7xl mx-auto'>
-                {/* Section Header with Title and Admin Link */}
-                <div className='flex items-center justify-center mb-8'>
-                    <h2 className='text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900'>
-                        Shop by Category
-                    </h2>
-                    {isAdmin && (
+                {/* Admin Link - Only visible to admins */}
+                {isAdmin && (
+                    <div className='flex justify-end mb-2'>
                         <Link
                             href='/admin/categories'
-                            className='absolute right-6 flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-colors text-xs sm:text-sm'
+                            className='flex items-center gap-2 px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-colors text-xs'
                             title='Manage Categories'
                         >
-                            <Settings size={18} />
+                            <Settings size={14} />
                             <span className='max-sm:hidden'>Manage</span>
                         </Link>
-                    )}
-                </div>
+                    </div>
+                )}
 
-                {/* Categories Grid */}
-                <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 sm:gap-6'>
+                {/* Categories Grid - Flipkart Style */}
+                <div className='flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8'>
                     {categories.map((category) => (
                         <Link
                             key={category._id}
                             href={category.link || `/shop?category=${encodeURIComponent(category.name)}`}
-                            className='flex flex-col items-center gap-3 group cursor-pointer'
+                            className='flex flex-col items-center gap-2 group cursor-pointer min-w-[70px] sm:min-w-[80px] md:min-w-[100px]'
                         >
                             {/* Circular Image */}
-                            <div className='relative w-20 sm:w-24 md:w-28 h-20 sm:h-24 md:h-28 rounded-full overflow-hidden shadow-md group-hover:shadow-lg transition-shadow'>
+                            <div className='relative w-14 sm:w-16 md:w-20 h-14 sm:h-16 md:h-20 rounded-full overflow-hidden shadow-sm group-hover:shadow-md transition-all group-hover:scale-105'>
                                 <Image
                                     src={category.image}
                                     alt={category.name}
                                     fill
-                                    className='object-cover group-hover:scale-110 transition-transform duration-300'
+                                    className='object-cover'
                                 />
                             </div>
 
                             {/* Category Name */}
-                            <p className='text-xs sm:text-sm md:text-base font-semibold text-slate-800 text-center line-clamp-2 group-hover:text-yellow-600 transition-colors'>
+                            <p className='text-[10px] sm:text-xs md:text-sm font-medium text-slate-700 text-center line-clamp-2 group-hover:text-yellow-600 transition-colors'>
                                 {category.name}
                             </p>
                         </Link>

@@ -65,8 +65,8 @@ export default async function Home() {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
             />
             <div>
-                <Hero initial={banner} />
                 <CategoriesSection />
+                <Hero initial={banner} />
                 <LatestProducts />
                 <BestSelling />
                 <OurSpecs />
